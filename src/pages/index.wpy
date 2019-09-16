@@ -1,0 +1,218 @@
+<style lang="less">
+.scroll_box {
+  overflow: auto;
+}
+.canvas {
+}
+.top-box {
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding-left: 20rpx;
+}
+.goods-name {
+  font-size: 30rpx;
+  font-weight: bold;
+}
+.close-price {
+  font-size: 40rpx;
+  color: #e64340;
+}
+.goods-high {
+  font-size: 28rpx;
+  text {
+    color: #e64340;
+    font-weight: bold;
+  }
+}
+.goods-low {
+  font-size: 28rpx;
+  text {
+    color: #09bb07;
+    font-weight: bold;
+  }
+}
+.goods-open {
+  font-size: 28rpx;
+}
+.goods-volume {
+  font-size: 28rpx;
+}
+.goods-date {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: 30rpx;
+  border-bottom: 1rpx solid #cdcdcd;
+  height: 50rpx;
+}
+</style>
+<template>
+  <view class="top-box">
+    <view class="goods-name">{{goodsName}}</view>
+    <view class="close-price">{{curMsg.close}}</view>
+    <view class="goods-high">高 <text>{{curMsg.high}}</text></view>
+    <view class="goods-low">低 <text>{{curMsg.low}}</text></view>
+    <view class="goods-open">开 <text>{{curMsg.open}}</text></view>
+    <!-- <view class="goods-volume">量 <text>{{curMsg.volume}}</text></view> -->
+  </view>
+  <view class="goods-date">{{curMsg.day}}</view>
+  <canvas class="y-axis"
+          style="width:{{yWidth}}px;height:{{cHeight}}px;position:absolute"
+          canvas-id="yAxis"></canvas>
+  <scroll-view class="scroll_box"
+               style="width:{{wWidth-yWidth}}px;height:{{cHeight+30}}px;margin-left:{{yWidth}}px;"
+               scroll-x
+               bindscroll="onScroll"
+               bindtouchend="onTouchEnd"
+               bindtouchstart="onTouchStart">
+    <view style="width:{{maincWidth}}px;height:{{cHeight}}px">
+      <canvas class="canvas"
+              style="width:{{maincWidth}}px;height:{{cHeight}}px"
+              canvas-id="mainContent"></canvas>
+    </view>
+  </scroll-view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import drawAxisUtil from '../utils/draw-axis'
+import apiUtil from '../api/apiUtil'
+import kLinesDatas from '../utils/datas'
+export default class Index extends wepy.page {
+  config = {
+    navigationBarTitleText: '策略学习'
+  }
+
+  components = {
+  }
+
+  data = {
+    mainCanvas: null,
+    wWidth: 0,
+    wHeight: 0,
+    yWidth: 50,
+    xHeight: 50,
+    cHeight: 300,
+    minData: 0,
+    maxData: 0,
+    goodsId: null,
+    goodsName: '隆平高科',
+    goodsCode: null,
+    kLineView: null,
+    quotation: {},
+    quotePeriod: null,
+    values: [],
+    canvasLen: 0,
+    maincWidth: 0,
+    kWidth: 20,
+    kMarginRight: 5,
+    mainMarginLeft: 15,
+    scrollLeft: 0, //滚动条滚动的位置
+    touchEnd: 0, // 点击canvas的位置
+    kDatas: [
+    ],
+    curMsg: {},
+    isScroll: false,
+    lastSelectKIndex: null, //上次选中k线的index
+  }
+
+  onLoad () {
+    let _t = this
+    wx.getSystemInfo({
+      success (res) {
+        _t.wWidth = res.windowWidth
+        _t.wHeight = res.windowHeight
+      }
+    })
+    this._onGetKLinesData()
+  }
+
+  _onGetKLinesData () {
+    this.kDatas = kLinesDatas.kLines
+    this.curMsg = this.kDatas[this.kDatas.length - 1]
+    // apiUtil.onGetKLinesApi({}, res => {
+    //   res.data.replace(/day/g, "days")
+    //   res.data.replace('open', '"open"')
+    //   res.data.replace('close', '"close"')
+    //   res.data.replace('low', '"low"')
+    //   res.data.replace('high', '"high"')
+    //   res.data.replace('volume', '"volume"')
+    //   this.kDatas = res.data
+    console.log("===", this.kDatas)
+    this.onCanvas()
+    //   this.$apply()
+    // })
+  }
+
+  onCanvas () {
+    const data = this.kDatas
+    const minData = Math.min.apply(Math, data.map(function (o) { return o.low }))
+    const maxData = Math.max.apply(Math, data.map(function (o) { return o.high }))
+    this.minData = minData
+    this.maxData = maxData
+    // 绘制纵坐标
+    const yctx = wx.createCanvasContext('yAxis')
+    const ystyle = {
+      color: '#cdcdcd'
+    }
+    const points = drawAxisUtil.onDrawYAxis(yctx, minData, maxData, ystyle, this.xHeight, this.cHeight, this.yWidth)
+    // 绘制横坐标
+    let xctx = wx.createCanvasContext('mainContent')
+    this.mainCanvas = xctx
+    const xstyle = {
+      color: '#cdcdcd'
+    }
+    this.maincWidth = (this.kWidth + this.kMarginRight) * this.kDatas.length + this.mainMarginLeft
+    this.maincWidth < this.wWidth - this.yWidth && (this.maincWidth = this.wWidth - this.yWidth)
+    console.log(this.maincWidth)
+    drawAxisUtil.onDrawXAxis(xctx, points, this.kWidth, this.kDatas.length, this.xHeight, this.cHeight, this.maincWidth, this.wWidth - this.yWidth, 1, xstyle, data)
+    // 绘制k线图
+    drawAxisUtil.onDrawKLines(xctx, this.cHeight, this.xHeight, this.kDatas, minData, maxData)
+  }
+
+  onTouchStart (e) {
+    this.isScroll = false
+    console.log('start:', e)
+  }
+
+
+  onTouchEnd (e) {
+    if (this.isScroll) {
+      return
+    }
+    console.log('end', e)
+    this.touchEnd = e.changedTouches[0].pageX - 50
+    const kn = Math.ceil((this.scrollLeft + e.changedTouches[0].pageX - 50 - this.mainMarginLeft) / (this.kWidth + this.kMarginRight))
+    console.log(kn)
+    this.curMsg = this.kDatas[kn - 1]
+    if (this.lastSelectKIndex == kn - 1) {
+      return
+    }
+    if (this.lastSelectKIndex != null) {
+      // 清除上次选中状态
+      drawAxisUtil.onDrawLineBorder(this.mainCanvas, this.cHeight, this.xHeight, this.minData, this.maxData, this.kDatas[this.lastSelectKIndex], this.lastSelectKIndex, true)
+    }
+    drawAxisUtil.onDrawLineBorder(this.mainCanvas, this.cHeight, this.xHeight, this.minData, this.maxData, this.kDatas[kn - 1], kn - 1, false)
+    this.lastSelectKIndex = kn - 1
+    this.mainCanvas.draw(true)
+  }
+
+  onScroll (e) {
+    console.log('scroll', e)
+    const kn = Math.ceil((e.detail.scrollLeft + this.wWidth - this.yWidth - this.mainMarginLeft) / (this.kWidth + this.kMarginRight))
+    this.curMsg = this.kDatas[kn - 1]
+    this.scrollLeft = e.detail.scrollLeft
+    this.isScroll = true
+  }
+
+
+  methods = {
+
+
+  }
+
+
+
+}
+</script>
