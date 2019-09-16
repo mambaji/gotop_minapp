@@ -52,7 +52,8 @@ const onDrawXAxis = function (ctx, ypoints, kWidth, kNum, xHeight, cHeight, cWid
   const spaceKTime = ((wcWidth - xmarginLeft) / (kWidth + kmarginRight) / limitTimeNum).toFixed(0) // 多少根k线绘制一个横坐标数值
   const points = []
   const texts = []
-  for (let i = 1, j = (kNum / spaceKTime).toFixed(0); i <= j; i++) {
+  console.log(kNum / spaceKTime)
+  for (let i = 1, j = parseInt(kNum / spaceKTime); i <= j; i++) {
     points.push(xmarginLeft + (kWidth + kmarginRight) * i * spaceKTime - kmarginRight - kWidth / 2)  // k线宽度 * k线数量 - k线右边距 - k线宽度 / 2 ；这样的点正好对准k线的中心
     texts.push(kDatas[i * spaceKTime].day)
   }
@@ -80,8 +81,9 @@ const onDrawXAxis = function (ctx, ypoints, kWidth, kNum, xHeight, cHeight, cWid
   ctx.beginPath()
   ctx.setFontSize(12)
   ctx.setFillStyle('#333')
+
   texts.forEach(function (item, index) {
-    ctx.fillText(item, points[index] - 60, endY + 20)
+    ctx.fillText(item, points[index] - ctx.measureText(item).width / 2, endY + 20)
   })
   ctx.closePath()
   ctx.stroke()
@@ -119,44 +121,58 @@ const onDrawKLines = function (ctx, cHeight, xHeight, kDatas, min, max) {
   ctx.draw()
 }
 
-const onDrawLineBorder = function (ctx, cHeight, xHeight, min, max, curMsg, i, clear) {
+const onDrawLineBorder = function (ctx, cHeight, xHeight, min, max, curMsg, i, isScroll = false) {
   const yNumpx = (cHeight - xHeight - 30) / (max - min)
   let startX = 0
   let startY = 0
   let endX = 0
   let endY = 0
-  ctx.beginPath()
   if (curMsg.open < curMsg.close) {
     startY = cHeight - xHeight - 15 - (curMsg.close - min) * yNumpx
     endY = cHeight - xHeight - 15 - (curMsg.open - min) * yNumpx
-    ctx.setFillStyle('#e64340')
-    ctx.setStrokeStyle('#e64340')
   } else if (curMsg.open > curMsg.close) {
     startY = cHeight - xHeight - 15 - (curMsg.open - min) * yNumpx
     endY = cHeight - xHeight - 15 - (curMsg.close - min) * yNumpx
-    ctx.setFillStyle('#09bb07')
-    ctx.setStrokeStyle('#09bb07')
   } else {
     startY = cHeight - xHeight - 15 - (curMsg.open - min) * yNumpx
     endY = cHeight - xHeight - 15 - (curMsg.close - min) * yNumpx
-    ctx.setFillStyle('#666')
-    ctx.setStrokeStyle('#666')
   }
   startX = 15 + (20 + 5) * i
   endX = startX + 20
-  if (clear) {
-    // ctx.clearRect(startX - 2, startY - 2, endX - startX + 2, endY - startY + 2)
-    ctx.fillRect(startX, startY, endX - startX, endY - startY)
+  // 绘制border
+  ctx.beginPath()
+  ctx.setStrokeStyle('#333')
+  ctx.setLineWidth(2)
+  ctx.strokeRect(startX, startY, (endX - startX), (endY - startY))
+  ctx.closePath()
+  ctx.stroke()
+
+  // 绘制直线
+  ctx.beginPath()
+  ctx.setStrokeStyle('#333')
+  ctx.setLineWidth(0.5)
+  ctx.moveTo(startX + 10, cHeight - xHeight)
+  ctx.lineTo(startX + 10, 0)
+  ctx.closePath()
+  ctx.stroke()
+  // 绘制时间
+  if (!isScroll) {
+    const tw = ctx.measureText(curMsg.day).width
+    ctx.beginPath()
+    ctx.setFillStyle('#333')
+    ctx.fillRect(startX + 10 - 12.5 - tw / 2, cHeight - xHeight + 5, tw + 25, 15)
     ctx.closePath()
     ctx.stroke()
-  } else {
-    ctx.setStrokeStyle('#000')
-    ctx.setLineWidth(1)
-    ctx.strokeRect(startX + 1.5, startY + 1.5, (endX - startX - 3), (endY - startY - 3))
+
+    ctx.beginPath()
+    ctx.setFontSize(12)
+    ctx.setFillStyle('#ffffff')
+    ctx.fillText(curMsg.day, startX + 10 - tw / 2, cHeight - xHeight + 17)
     ctx.closePath()
     ctx.stroke()
   }
 
+  ctx.draw()
 }
 
 function forDrawKLine (i, ctx, yNumpx, open, close, high, low, startX, startY, endX, endY, lowpx, highpx, cHeight, xHeight, min, max) {

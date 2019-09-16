@@ -5,60 +5,64 @@
 .canvas {
 }
 .top-box {
-  height: 80rpx;
+  height: 30px;
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  padding-left: 20rpx;
+  padding-left: 15px;
+  padding-top: 10px;
 }
 .goods-name {
-  font-size: 30rpx;
+  font-size: 16px;
   font-weight: bold;
+  margin-left: 15px;
 }
 .close-price {
-  font-size: 40rpx;
+  font-size: 20px;
   color: #e64340;
+  margin-left: 15px;
 }
 .goods-high {
-  font-size: 28rpx;
+  font-size: 14px;
+  margin-left: 15px;
   text {
     color: #e64340;
     font-weight: bold;
   }
 }
 .goods-low {
-  font-size: 28rpx;
+  font-size: 14px;
+  margin-left: 15px;
   text {
     color: #09bb07;
     font-weight: bold;
   }
 }
 .goods-open {
-  font-size: 28rpx;
+  font-size: 14px;
+  margin-left: 15px;
 }
 .goods-volume {
-  font-size: 28rpx;
+  font-size: 14px;
 }
 .goods-date {
-  font-size: 24rpx;
+  font-size: 12px;
+  height: 20px;
   color: #999;
-  padding-left: 30rpx;
+  padding-left: 15px;
   border-bottom: 1rpx solid #cdcdcd;
-  height: 50rpx;
 }
-.scale-img {
-  width: 60rpx;
-  height: 60rpx;
-  position: fixed;
-  top: 230px;
-  right: 10px;
+.close-img {
+  width: 24px;
+  height: 24px;
 }
 </style>
 <template>
-  <titlebar leftArrow=""
-            titleName="策略学习"
-            bgcolor=""></titlebar>
   <view class="top-box">
+    <image @tap.stop="onBack"
+           class="close-img"
+           src="../images/back.png"
+           lazy-load="false">
+    </image>
     <view class="goods-name">{{goodsName}}</view>
     <view class="close-price">{{curMsg.close}}</view>
     <view class="goods-high">高 <text>{{curMsg.high}}</text></view>
@@ -83,12 +87,6 @@
             style="width:{{maincWidth}}px;height:{{cHeight}}px;"
             canvas-id="select-k-canvas"></canvas>
   </scroll-view>
-  <cover-image @tap.stop="onToLandscape"
-               class="scale-img"
-               src="../images/scale-big.png"
-               mode="scaleToFill"
-               lazy-load="false">
-  </cover-image>
 </template>
 
 <script>
@@ -96,15 +94,12 @@ import wepy from 'wepy';
 import drawAxisUtil from '../utils/draw-axis';
 import apiUtil from '../api/apiUtil';
 import kLinesDatas from '../utils/datas';
-import titlebar from '../components/title-bar-zl';
-export default class Index extends wepy.page {
+export default class landscape extends wepy.page {
   config = {
-    navigationBarTitleText: '策略学习'
+    pageOrientation: 'landscape'
   };
 
-  components = {
-    titlebar: titlebar
-  };
+  components = {};
 
   data = {
     landscape: 'landscape',
@@ -139,8 +134,10 @@ export default class Index extends wepy.page {
     let _t = this;
     wx.getSystemInfo({
       success(res) {
+        console.log(res);
         _t.wWidth = res.windowWidth;
         _t.wHeight = res.windowHeight;
+        _t.cHeight = _t.wHeight - 60;
       }
     });
     this._onGetKLinesData();
@@ -280,8 +277,10 @@ export default class Index extends wepy.page {
   }
 
   methods = {
-    onToLandscape(e) {
-      wepy.navigateTo({ url: 'landscape' });
+    onBack() {
+      wepy.navigateBack({
+        delta: 1 //返回的页面数，如果 delta 大于现有页面数，则返回到首页,
+      });
     }
   };
 }
