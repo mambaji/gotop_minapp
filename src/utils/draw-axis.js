@@ -118,7 +118,6 @@ const onDrawKLines = function (ctx, cHeight, xHeight, kDatas, min, max) {
   for (let i = 0; i < kDatas.length; i++) {
     forDrawKLine(i, ctx, yNumpx, parseFloat(kDatas[i].open), parseFloat(kDatas[i].close), parseFloat(kDatas[i].high), parseFloat(kDatas[i].low), startX, startY, endX, endY, lowpx, highpx, cHeight, xHeight, min, max)
   }
-  ctx.draw()
 }
 
 const onDrawLineBorder = function (ctx, cHeight, xHeight, min, max, curMsg, i, isScroll = false) {

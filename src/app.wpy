@@ -1,12 +1,6 @@
 <style lang="less">
-.container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  box-sizing: border-box;
-}
+@import './styles/icon';
+@import './styles/base';
 </style>
 
 <script>
@@ -15,7 +9,7 @@ import 'wepy-async-function';
 
 export default class extends wepy.app {
   config = {
-    pages: ['pages/index', 'pages/landscape'],
+    pages: ['pages/index', 'pages/landscape', 'pages/tradeOrder', 'pages/tradeSign'],
     window: {
       backgroundTextStyle: 'light',
       navigationBarBackgroundColor: '#fff',
@@ -35,7 +29,7 @@ export default class extends wepy.app {
     this.use('promisify');
   }
 
-  onLaunch() {
+  onLaunch () {
     let that = this;
   }
 }

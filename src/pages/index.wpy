@@ -49,9 +49,99 @@
 .scale-img {
   width: 60rpx;
   height: 60rpx;
-  position: fixed;
+  position: absolute;
   top: 230px;
   right: 10px;
+}
+.trade-sign_head {
+  width: 100%;
+  height: 60rpx;
+  margin-bottom: 20rpx;
+  .title {
+    font-size: 30rpx;
+    display: flex;
+    padding-left: 20rpx;
+    padding-right: 20rpx;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1rpx solid #ebebeb;
+    height: 60rpx;
+    .label2 {
+      flex-grow: 1;
+      text-align: right;
+      color: #999;
+    }
+    i {
+      font-size: 30rpx;
+      color: #999;
+    }
+  }
+}
+.trade-sign_content {
+  width: 100%;
+  padding: 10rpx 20rpx;
+  display: flex;
+  justify-content: space-around;
+  font-size: 28rpx;
+  .label1-buy {
+    color: #27ae5b;
+    font-weight: bold;
+  }
+  .label1-sell {
+    color: #e31a20;
+    font-weight: bold;
+  }
+  .label2 {
+    color: #666;
+  }
+}
+
+.trade-order_head {
+  width: 100%;
+  height: 60rpx;
+  margin-top: 20rpx;
+  margin-bottom: 20rpx;
+  .title {
+    font-size: 30rpx;
+    display: flex;
+    padding-left: 20rpx;
+    padding-right: 20rpx;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1rpx solid #ebebeb;
+    height: 60rpx;
+    .label2 {
+      flex-grow: 1;
+      text-align: right;
+      color: #999;
+    }
+    i {
+      font-size: 30rpx;
+      color: #999;
+    }
+  }
+}
+
+.trade-order_content {
+  width: 100%;
+  padding: 10rpx 20rpx;
+  display: flex;
+  justify-content: space-around;
+  font-size: 28rpx;
+  .label1-buy {
+    color: #27ae5b;
+    font-weight: bold;
+  }
+  .label1-sell {
+    color: #e31a20;
+    font-weight: bold;
+  }
+  .label2-success {
+    color: #333;
+  }
+  .label2-fail {
+    color: #999;
+  }
 }
 </style>
 <template>
@@ -76,13 +166,59 @@
                bindscroll="onScroll"
                bindtouchend="onTouchEnd"
                bindtouchstart="onTouchStart">
-    <canvas class="canvas"
+    <!-- <image wx:if="{{mainCanvasImg}}"
+           src="{{mainCanvasImg}}"
+           style="width:{{maincWidth}}px;height:{{cHeight}}px;position:absolute;"></image> -->
+    <canvas wx:if="{{!mainCanvasImg}}"
             style="width:{{maincWidth}}px;height:{{cHeight}}px;position:absolute;"
             canvas-id="mainContent"></canvas>
     <canvas class="canvas"
             style="width:{{maincWidth}}px;height:{{cHeight}}px;"
             canvas-id="select-k-canvas"></canvas>
   </scroll-view>
+  <view class="trade-sign_head">
+    <view class="title">
+      <text class="label1">交易信号</text>
+      <text class="label2"
+            @tap="onTradeSignDetail">更多</text>
+      <i @tap="onTradeSignDetail"
+         class="iconfont icon-more"></i>
+    </view>
+  </view>
+
+  <repeat for="{{tradeSignList}}"
+          key="index"
+          index="index"
+          item="item">
+    <view class="trade-sign_content">
+      <text class="{{item.type=='buy'?'label1-buy':'label1-sell'}}">{{item.type}}</text>
+      <text class="label2">{{item.time}}</text>
+      <text class="{{item.type=='buy'?'label1-buy':'label1-sell'}}">${{item.price}}</text>
+    </view>
+  </repeat>
+
+  <view class="trade-order_head">
+    <view class="title">
+      <text class="label1"
+            @tap="onTradeOrderDetail">交易订单</text>
+      <text class="label2"
+            @tap="onTradeOrderDetail">更多</text>
+      <i class="iconfont icon-more"></i>
+    </view>
+  </view>
+
+  <repeat for="{{tradeOrderList}}"
+          key="index"
+          index="index"
+          item="item">
+    <view class="trade-order_content">
+      <text class="{{item.type=='buy'?'label1-buy':'label1-sell'}}">{{item.type}}</text>
+      <text class="{{item.status=='成功'?'label2-success':'label2-fail'}}">{{item.status}}</text>
+      <text class="time">{{item.time}}</text>
+      <text class="{{item.type=='buy'?'label1-buy':'label1-sell'}}">${{item.price}}</text>
+    </view>
+  </repeat>
+
   <cover-image @tap.stop="onToLandscape"
                class="scale-img"
                src="../images/scale-big.png"
@@ -132,13 +268,94 @@ export default class Index extends wepy.page {
     touchEnd: 0, // 点击canvas的位置
     kDatas: [],
     curMsg: {},
-    isScroll: false
+    isScroll: false,
+    mainCanvasImg: null,
+    tradeSignList: [
+      {
+        type: 'buy',
+        time: '2019-09-17 10:12:23',
+        price: '25.25'
+      },
+      {
+        type: 'sell',
+        time: '2019-09-17 10:12:23',
+        price: '25.25'
+      },
+      {
+        type: 'buy',
+        time: '2019-09-17 10:12:23',
+        price: '25.25'
+      },
+      {
+        type: 'sell',
+        time: '2019-09-17 10:12:23',
+        price: '25.25'
+      }, {
+        type: 'buy',
+        time: '2019-09-17 10:12:23',
+        price: '25.25'
+      },
+      {
+        type: 'buy',
+        time: '2019-09-17 10:12:23',
+        price: '25.25'
+      },
+      {
+        type: 'sell',
+        time: '2019-09-17 10:12:23',
+        price: '25.25'
+      }
+    ],
+    tradeOrderList: [
+      {
+        type: 'buy',
+        status: '成功',
+        time: '2019-09-17 10:12:23',
+        price: '28.26'
+      },
+      {
+        type: 'sell',
+        status: '成功',
+        time: '2019-09-17 10:12:23',
+        price: '28.26'
+      },
+      {
+        type: 'buy',
+        status: '失败',
+        time: '2019-09-17 10:12:23',
+        price: '28.26'
+      },
+      {
+        type: 'buy',
+        status: '成功',
+        time: '2019-09-17 10:12:23',
+        price: '28.26'
+      },
+      {
+        type: 'sell',
+        status: '成功',
+        time: '2019-09-17 10:12:23',
+        price: '28.26'
+      },
+      {
+        type: 'buy',
+        status: '成功',
+        time: '2019-09-17 10:12:23',
+        price: '28.26'
+      },
+      {
+        type: 'buy',
+        status: '成功',
+        time: '2019-09-17 10:12:23',
+        price: '28.26'
+      },
+    ]
   };
 
-  onLoad() {
+  onLoad () {
     let _t = this;
     wx.getSystemInfo({
-      success(res) {
+      success (res) {
         _t.wWidth = res.windowWidth;
         _t.wHeight = res.windowHeight;
       }
@@ -146,7 +363,7 @@ export default class Index extends wepy.page {
     this._onGetKLinesData();
   }
 
-  _onGetKLinesData() {
+  _onGetKLinesData () {
     this.kDatas = kLinesDatas.kLines;
     this.curMsg = this.kDatas[this.kDatas.length - 1];
     // apiUtil.onGetKLinesApi({}, res => {
@@ -163,17 +380,17 @@ export default class Index extends wepy.page {
     // })
   }
 
-  onCanvas() {
+  onCanvas () {
     const data = this.kDatas;
     const minData = Math.min.apply(
       Math,
-      data.map(function(o) {
+      data.map(function (o) {
         return o.low;
       })
     );
     const maxData = Math.max.apply(
       Math,
-      data.map(function(o) {
+      data.map(function (o) {
         return o.high;
       })
     );
@@ -228,14 +445,33 @@ export default class Index extends wepy.page {
       minData,
       maxData
     );
+    xctx.draw(true, res => {
+      let _t = this
+      // wx.canvasToTempFilePath({
+      //   canvasId: 'mainContent',
+      //   success (res) {
+      //     _t.mainCanvasImg = res.tempFilePath
+      //     _t.$apply()
+      //     console.log('SUCCESS', res.tempFilePath)
+      //   },
+      //   fail (res) {
+      //     console.log('fail:', res)
+      //   },
+      //   complate (res) {
+      //     console.log('complate:', res)
+      //   }
+      // })
+    })
+    // 将mainContent画布保存为本地图片
+
   }
 
-  onTouchStart(e) {
+  onTouchStart (e) {
     this.isScroll = false;
     console.log('start:', e);
   }
 
-  onTouchEnd(e) {
+  onTouchEnd (e) {
     if (this.isScroll) {
       return;
     }
@@ -245,7 +481,7 @@ export default class Index extends wepy.page {
         e.changedTouches[0].pageX -
         this.yWidth -
         this.mainMarginLeft) /
-        (this.kWidth + this.kMarginRight)
+      (this.kWidth + this.kMarginRight)
     );
     this.curMsg = this.kDatas[kn - 1];
     drawAxisUtil.onDrawLineBorder(
@@ -259,10 +495,10 @@ export default class Index extends wepy.page {
     );
   }
 
-  onScroll(e) {
+  onScroll (e) {
     const kn = Math.ceil(
       (e.detail.scrollLeft + this.wWidth - this.yWidth - this.mainMarginLeft) /
-        (this.kWidth + this.kMarginRight)
+      (this.kWidth + this.kMarginRight)
     );
     this.curMsg = this.kDatas[kn - 1];
     drawAxisUtil.onDrawLineBorder(
@@ -280,8 +516,15 @@ export default class Index extends wepy.page {
   }
 
   methods = {
-    onToLandscape(e) {
+    onToLandscape (e) {
       wepy.navigateTo({ url: 'landscape' });
+    },
+    onTradeOrderDetail () {
+      wepy.navigateTo({ url: 'tradeOrder' });
+    },
+    onTradeSignDetail () {
+      wepy.navigateTo({ url: 'tradeSign' });
+
     }
   };
 }
