@@ -157,11 +157,8 @@
     <!-- <view class="goods-volume">量 <text>{{curMsg.volume}}</text></view> -->
   </view>
   <view class="goods-date">{{curMsg.day}}</view>
-  <canvas class="y-axis"
-          style="width:{{yWidth}}px;height:{{cHeight}}px;position:absolute"
-          canvas-id="yAxis"></canvas>
   <scroll-view class="scroll_box"
-               style="width:{{wWidth-yWidth}}px;height:{{cHeight}}px;margin-left:{{yWidth}}px;"
+               style="width:{{wWidth-yWidth}}px;height:{{cHeight}}px;position:absolute;"
                scroll-x
                bindscroll="onScroll"
                bindtouchend="onTouchEnd"
@@ -176,6 +173,9 @@
             style="width:{{maincWidth}}px;height:{{cHeight}}px;"
             canvas-id="select-k-canvas"></canvas>
   </scroll-view>
+  <canvas class="y-axis"
+          style="width:{{yWidth}}px;height:{{cHeight}}px;margin-left:{{wWidth-yWidth}}px;"
+          canvas-id="yAxis"></canvas>
   <view class="trade-sign_head">
     <view class="title">
       <text class="label1">交易信号</text>
@@ -219,12 +219,12 @@
     </view>
   </repeat>
 
-  <cover-image @tap.stop="onToLandscape"
+  <!-- <cover-image @tap.stop="onToLandscape"
                class="scale-img"
                src="../images/scale-big.png"
                mode="scaleToFill"
                lazy-load="false">
-  </cover-image>
+  </cover-image> -->
 </template>
 
 <script>
@@ -233,6 +233,7 @@ import drawAxisUtil from '../utils/draw-axis';
 import apiUtil from '../api/apiUtil';
 import kLinesDatas from '../utils/datas';
 import titlebar from '../components/title-bar-zl';
+import drawKLinesUtil from '../utils/drawKLinesUtil'
 export default class Index extends wepy.page {
   config = {
     navigationBarTitleText: '策略学习'
@@ -353,6 +354,7 @@ export default class Index extends wepy.page {
   };
 
   onLoad () {
+    const drawUtil = new drawKinesUtil()
     let _t = this;
     wx.getSystemInfo({
       success (res) {
@@ -475,11 +477,10 @@ export default class Index extends wepy.page {
     if (this.isScroll) {
       return;
     }
-    this.touchEnd = e.changedTouches[0].pageX - this.yWidth;
+    this.touchEnd = e.changedTouches[0].pageX;
     const kn = Math.ceil(
       (this.scrollLeft +
         e.changedTouches[0].pageX -
-        this.yWidth -
         this.mainMarginLeft) /
       (this.kWidth + this.kMarginRight)
     );

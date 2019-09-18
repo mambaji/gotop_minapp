@@ -12,25 +12,25 @@ const onDrawYAxis = function (ctx, minNum, maxNum, style, xheight, cheight, cwid
     text.push(minNum + i * limit)
   }
   // 绘制边框
-  ctx.beginPath()
-  ctx.setFillStyle(style.color)
-  ctx.fillRect(0, 0, startX, cheight - xheight)
-  ctx.closePath()
-  ctx.stroke()
+  // ctx.beginPath()
+  // ctx.setFillStyle(style.color)
+  // ctx.fillRect(0, 0, startX, cheight - xheight)
+  // ctx.closePath()
+  // ctx.stroke()
   // 绘制轴上数值线段
-  ctx.beginPath()
-  ctx.setStrokeStyle('#333')
-  ctx.setLineWidth(0.2)
-  points.forEach(function (item, index) {
-    ctx.moveTo(startX, item)
-    ctx.lineTo(endX, item)
-  })
-  ctx.closePath()
-  ctx.stroke()
+  // ctx.beginPath()
+  // ctx.setStrokeStyle('#333')
+  // ctx.setLineWidth(0.2)
+  // points.forEach(function (item, index) {
+  //   ctx.moveTo(startX, item)
+  //   ctx.lineTo(endX, item)
+  // })
+  // ctx.closePath()
+  // ctx.stroke()
   // 绘制轴上数值
   ctx.beginPath()
   ctx.setFontSize(12)
-  ctx.setFillStyle('#333')
+  ctx.setFillStyle('#CBCDD5')
   text.forEach(function (item, index) {
     ctx.fillText(item.toFixed(2), endX - 40, points[index] + 5)
   })
@@ -60,27 +60,27 @@ const onDrawXAxis = function (ctx, ypoints, kWidth, kNum, xHeight, cHeight, cWid
 
 
   // 绘制边框
-  ctx.beginPath()
-  ctx.setFillStyle('#f8f9fc')
-  ctx.fillRect(0, 0, endX, cHeight - xHeight)
-  ctx.closePath()
-  ctx.stroke()
-
-  ctx.beginPath()
-  ctx.setFillStyle(style.color)
-  ctx.moveTo(startX, startY)
-  ctx.lineTo(endX, endY)
-  points.forEach(function (item, index) {
-    ctx.moveTo(item, startY)
-    ctx.lineTo(item, endY - 10)
-  })
-  ctx.closePath()
-  ctx.stroke()
+  // ctx.beginPath()
+  // ctx.setFillStyle('#f8f9fc')
+  // ctx.fillRect(0, 0, endX, cHeight - xHeight)
+  // ctx.closePath()
+  // ctx.stroke()
+  // 绘制轴上线段
+  // ctx.beginPath()
+  // ctx.setFillStyle(style.color)
+  // ctx.moveTo(startX, startY)
+  // ctx.lineTo(endX, endY)
+  // points.forEach(function (item, index) {
+  //   ctx.moveTo(item, startY)
+  //   ctx.lineTo(item, endY - 10)
+  // })
+  // ctx.closePath()
+  // ctx.stroke()
 
   // 绘制轴上数值
   ctx.beginPath()
   ctx.setFontSize(12)
-  ctx.setFillStyle('#333')
+  ctx.setFillStyle('#CBCDD5')
 
   texts.forEach(function (item, index) {
     ctx.fillText(item, points[index] - ctx.measureText(item).width / 2, endY + 20)
@@ -90,11 +90,11 @@ const onDrawXAxis = function (ctx, ypoints, kWidth, kNum, xHeight, cHeight, cWid
 
   // 绘制虚线
   ctx.beginPath()
-  ctx.setLineDash([5, 10], 5)
-  ctx.setStrokeStyle('#999')
-  ctx.setLineWidth(0.2)
+  // ctx.setLineDash([5, 10], 5)
+  ctx.setStrokeStyle('#DFDEDE')
+  ctx.setLineWidth(1)
   ypoints.forEach(function (item, index) {
-    ctx.moveTo(startX, item)
+    ctx.moveTo(startX + 10, item)
     ctx.lineTo(cWidth, item)
   })
 
