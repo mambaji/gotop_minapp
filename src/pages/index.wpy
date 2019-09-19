@@ -166,8 +166,7 @@
     <!-- <image wx:if="{{mainCanvasImg}}"
            src="{{mainCanvasImg}}"
            style="width:{{maincWidth}}px;height:{{cHeight}}px;position:absolute;"></image> -->
-    <canvas wx:if="{{!mainCanvasImg}}"
-            style="width:{{maincWidth}}px;height:{{cHeight}}px;position:absolute;"
+    <canvas style="width:{{maincWidth}}px;height:{{cHeight}}px;position:absolute;"
             canvas-id="mainContent"></canvas>
     <canvas class="canvas"
             style="width:{{maincWidth}}px;height:{{cHeight}}px;"
@@ -244,68 +243,54 @@ export default class Index extends wepy.page {
   };
 
   data = {
-    landscape: 'landscape',
-    kselectCanvas: null,
     wWidth: 0,
     wHeight: 0,
     yWidth: 50,
     xHeight: 50,
-    cHeight: 200,
-    minData: 0,
-    maxData: 0,
+    cHeight: 300,
     goodsId: null,
     goodsName: '隆平高科',
     goodsCode: null,
-    kLineView: null,
-    quotation: {},
-    quotePeriod: null,
-    values: [],
-    canvasLen: 0,
-    maincWidth: 0,
-    kWidth: 20,
-    kMarginRight: 5,
-    mainMarginLeft: 15,
-    scrollLeft: 0, //滚动条滚动的位置
-    touchEnd: 0, // 点击canvas的位置
+    maincWidth: 0,  // mainCanvas 画布宽度
     kDatas: [],
     curMsg: {},
     isScroll: false,
-    mainCanvasImg: null,
+    mainCanvasImg: null,  // 画布生成的图片地址
     tradeSignList: [
       {
         type: 'buy',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
+        time: '2019-07-09 11:12:23',
+        price: '22.32'
       },
       {
         type: 'sell',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
+        time: '2019-07-11 10:12:23',
+        price: '22.61'
       },
-      {
-        type: 'buy',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
-      },
-      {
-        type: 'sell',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
-      }, {
-        type: 'buy',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
-      },
-      {
-        type: 'buy',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
-      },
-      {
-        type: 'sell',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
-      }
+      // {
+      //   type: 'buy',
+      //   time: '2019-09-17 10:12:23',
+      //   price: '25.25'
+      // },
+      // {
+      //   type: 'sell',
+      //   time: '2019-09-17 10:12:23',
+      //   price: '25.25'
+      // }, {
+      //   type: 'buy',
+      //   time: '2019-09-17 10:12:23',
+      //   price: '25.25'
+      // },
+      // {
+      //   type: 'buy',
+      //   time: '2019-09-17 10:12:23',
+      //   price: '25.25'
+      // },
+      // {
+      //   type: 'sell',
+      //   time: '2019-09-17 10:12:23',
+      //   price: '25.25'
+      // }
     ],
     tradeOrderList: [
       {
@@ -354,7 +339,6 @@ export default class Index extends wepy.page {
   };
 
   onLoad () {
-    const drawUtil = new drawKinesUtil()
     let _t = this;
     wx.getSystemInfo({
       success (res) {
@@ -365,154 +349,76 @@ export default class Index extends wepy.page {
     this._onGetKLinesData();
   }
 
+  // 获取数据
   _onGetKLinesData () {
     this.kDatas = kLinesDatas.kLines;
     this.curMsg = this.kDatas[this.kDatas.length - 1];
-    // apiUtil.onGetKLinesApi({}, res => {
-    //   res.data.replace(/day/g, "days")
-    //   res.data.replace('open', '"open"')
-    //   res.data.replace('close', '"close"')
-    //   res.data.replace('low', '"low"')
-    //   res.data.replace('high', '"high"')
-    //   res.data.replace('volume', '"volume"')
-    //   this.kDatas = res.data
-    console.log('===', this.kDatas);
-    this.onCanvas();
-    //   this.$apply()
-    // })
+    this._onDrawInit();
+    this._onCanvasMain()
   }
 
-  onCanvas () {
-    const data = this.kDatas;
+  // 绘制初始化
+  _onDrawInit () {
+    const datas = this.kDatas
+    const yctx = wx.createCanvasContext('yAxis')
+    const mainctx = wx.createCanvasContext('mainContent')
+    const optctx = wx.createCanvasContext('select-k-canvas')
     const minData = Math.min.apply(
       Math,
-      data.map(function (o) {
+      datas.map(function (o) {
         return o.low;
       })
     );
     const maxData = Math.max.apply(
       Math,
-      data.map(function (o) {
+      datas.map(function (o) {
         return o.high;
       })
     );
-    this.minData = minData;
-    this.maxData = maxData;
-    this.kselectCanvas = wx.createCanvasContext('select-k-canvas');
-    // 绘制纵坐标
-    const yctx = wx.createCanvasContext('yAxis');
-    const ystyle = {
-      color: '#cdcdcd'
-    };
-    const points = drawAxisUtil.onDrawYAxis(
-      yctx,
-      minData,
-      maxData,
-      ystyle,
-      this.xHeight,
-      this.cHeight,
-      this.yWidth
-    );
-    // 绘制横坐标
-    let xctx = wx.createCanvasContext('mainContent');
-    this.mainCanvas = xctx;
-    const xstyle = {
-      color: '#cdcdcd'
-    };
-    this.maincWidth =
-      (this.kWidth + this.kMarginRight) * this.kDatas.length +
-      this.mainMarginLeft;
-    this.maincWidth < this.wWidth - this.yWidth &&
-      (this.maincWidth = this.wWidth - this.yWidth);
-    console.log(this.maincWidth);
-    drawAxisUtil.onDrawXAxis(
-      xctx,
-      points,
-      this.kWidth,
-      this.kDatas.length,
-      this.xHeight,
-      this.cHeight,
-      this.maincWidth,
-      this.wWidth - this.yWidth,
-      1,
-      xstyle,
-      data
-    );
-    // 绘制k线图
-    drawAxisUtil.onDrawKLines(
-      xctx,
-      this.cHeight,
-      this.xHeight,
-      this.kDatas,
-      minData,
-      maxData
-    );
-    xctx.draw(true, res => {
-      let _t = this
-      // wx.canvasToTempFilePath({
-      //   canvasId: 'mainContent',
-      //   success (res) {
-      //     _t.mainCanvasImg = res.tempFilePath
-      //     _t.$apply()
-      //     console.log('SUCCESS', res.tempFilePath)
-      //   },
-      //   fail (res) {
-      //     console.log('fail:', res)
-      //   },
-      //   complate (res) {
-      //     console.log('complate:', res)
-      //   }
-      // })
-    })
-    // 将mainContent画布保存为本地图片
+    console.log(datas)
+    let config = {
+      wWidth: this.wWidth,
+      wHeight: this.wHeight,
+      datas: datas,
+      signsList: this.tradeSignList,
+      kNum: datas.length,
+      yctx: yctx,
+      mainctx: mainctx,
+      optctx: optctx,
+      minNum: minData,
+      maxNum: maxData,
+      ycWidth: this.yWidth,
+      ycHeight: this.cHeight,
+      maincHeight: this.cHeight,
+      kWidth: 15,
+      k_margin_right: 10,
+      main_margin_left: 15,
+      screen_show_time: 2,
+    }
+    this.maincWidth = drawKLinesUtil.init(config)
+  }
 
+  // 开始绘制
+  _onCanvasMain () {
+    drawKLinesUtil.onDrawYAxis()
+    drawKLinesUtil.onDrawXAxis()
+    drawKLinesUtil.onDrawKLines()
+    drawKLinesUtil.onDrawTradeSign()
   }
 
   onTouchStart (e) {
     this.isScroll = false;
-    console.log('start:', e);
   }
 
   onTouchEnd (e) {
     if (this.isScroll) {
       return;
     }
-    this.touchEnd = e.changedTouches[0].pageX;
-    const kn = Math.ceil(
-      (this.scrollLeft +
-        e.changedTouches[0].pageX -
-        this.mainMarginLeft) /
-      (this.kWidth + this.kMarginRight)
-    );
-    this.curMsg = this.kDatas[kn - 1];
-    drawAxisUtil.onDrawLineBorder(
-      this.kselectCanvas,
-      this.cHeight,
-      this.xHeight,
-      this.minData,
-      this.maxData,
-      this.kDatas[kn - 1],
-      kn - 1
-    );
+    this.curMsg = drawKLinesUtil.onTouch(e.changedTouches[0].pageX)
   }
 
   onScroll (e) {
-    const kn = Math.ceil(
-      (e.detail.scrollLeft + this.wWidth - this.yWidth - this.mainMarginLeft) /
-      (this.kWidth + this.kMarginRight)
-    );
-    this.curMsg = this.kDatas[kn - 1];
-    drawAxisUtil.onDrawLineBorder(
-      this.kselectCanvas,
-      this.cHeight,
-      this.xHeight,
-      this.minData,
-      this.maxData,
-      this.kDatas[kn - 1],
-      kn - 1,
-      true
-    );
-    this.scrollLeft = e.detail.scrollLeft;
+    this.curMsg = drawKLinesUtil.onScroll(e.detail.scrollLeft)
     this.isScroll = true;
   }
 
