@@ -1,0 +1,5 @@
+module.exports = {
+  upsAndDowns: function (open, close) {
+    return Math.abs((close - open) / open * 100).toFixed(2) + '%'
+  }
+}

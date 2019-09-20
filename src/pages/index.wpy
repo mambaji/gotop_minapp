@@ -1,50 +1,135 @@
 <style lang="less">
+page {
+  background: #f8f9fc;
+}
 .scroll_box {
   overflow: auto;
+  margin-top: 80rpx;
 }
-.canvas {
+.y-axis {
+  margin-top: 80rpx;
 }
-.top-box {
-  height: 80rpx;
+.account-box {
+  width: 94%;
+  margin-left: 3%;
+  background: #1e88e5;
+  border-radius: 15rpx;
+  color: #fff;
+  padding: 20rpx 10rpx;
+  box-sizing: border-box;
+}
+.account-title {
+  text-align: center;
+  // font-weight: bold;
+  font-size: 32rpx;
+  i {
+    font-weight: 500;
+    color: #c0e2fd;
+  }
+}
+.account-content {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding-left: 20rpx;
+  margin-top: 30rpx;
 }
-.goods-name {
-  font-size: 30rpx;
-  font-weight: bold;
-}
-.close-price {
-  font-size: 40rpx;
-  color: #e64340;
-}
-.goods-high {
-  font-size: 28rpx;
-  text {
-    color: #e64340;
+.account-item {
+  height: 140rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  .label1 {
+    font-size: 44rpx;
     font-weight: bold;
   }
-}
-.goods-low {
-  font-size: 28rpx;
-  text {
-    color: #09bb07;
-    font-weight: bold;
+  .label2 {
+    font-size: 28rpx;
+    color: #c0e2fd;
   }
 }
-.goods-open {
-  font-size: 28rpx;
+.goods-box {
+  width: 94%;
+  margin-left: 3%;
+  background: #fff;
+  border-radius: 15rpx;
+  color: #fff;
+  padding: 30rpx 10rpx;
+  box-sizing: border-box;
+  box-shadow: 0px 1px 24px 0px #d7d7d7;
+  margin-top: 30rpx;
 }
-.goods-volume {
-  font-size: 28rpx;
+.goods-title {
+  display: flex;
+  justify-content: center;
+  .goods-title_name {
+    font-size: 28rpx;
+    color: #fff;
+    font-weight: bold;
+    background: #394243;
+    padding: 5rpx 15rpx;
+    border-radius: 8rpx;
+  }
+  i {
+    color: #dfdede;
+  }
 }
+.goods-content {
+  margin-top: 40rpx;
+}
+.goods-content_item {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  color: #333;
+  font-size: 28rpx;
+  margin-top: 20rpx;
+  i {
+    color: #333;
+  }
+  .label1 {
+    width: 33%;
+    text-align: center;
+    color: #27ae5b;
+  }
+  .label2 {
+    width: 33%;
+    text-align: center;
+    color: #e31a20;
+  }
+  .label3 {
+    width: 33%;
+    text-align: center;
+  }
+  .up {
+    color: #e31a20;
+  }
+  .down {
+    color: #27ae5b;
+  }
+  .label4 {
+    width: 33%;
+    text-align: center;
+    color: #e31a20;
+  }
+  .label5 {
+    width: 33%;
+    text-align: center;
+    color: #27ae5b;
+  }
+  .label6 {
+    width: 33%;
+    text-align: center;
+    color: #333;
+  }
+}
+
 .goods-date {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #999;
-  padding-left: 30rpx;
-  border-bottom: 1rpx solid #cdcdcd;
-  height: 50rpx;
+  padding-right: 40rpx;
+  text-align: right;
+  margin-top: 30rpx;
 }
 .scale-img {
   width: 60rpx;
@@ -148,15 +233,46 @@
   <titlebar leftArrow=""
             titleName="策略学习"
             bgcolor=""></titlebar>
-  <view class="top-box">
-    <view class="goods-name">{{goodsName}}</view>
-    <view class="close-price">{{curMsg.close}}</view>
-    <view class="goods-high">高 <text>{{curMsg.high}}</text></view>
-    <view class="goods-low">低 <text>{{curMsg.low}}</text></view>
-    <view class="goods-open">开 <text>{{curMsg.open}}</text></view>
-    <!-- <view class="goods-volume">量 <text>{{curMsg.volume}}</text></view> -->
+  <view class="account-box">
+    <view class="account-title"><i>———————</i> 账户信息 <i>———————</i></view>
+    <view class="account-content">
+      <view class="account-item">
+        <view class="label1">{{accountMsg.startAssets}}</view>
+        <view class="label2">初始资产</view>
+      </view>
+      <view class="account-item">
+        <view class="label1">{{accountMsg.curAssets}}</view>
+        <view class="label2">当前资产</view>
+      </view>
+      <view class="account-item">
+        <view class="label1">{{accountMsg.earningRate}}</view>
+        <view class="label2">收益率</view>
+      </view>
+    </view>
   </view>
-  <view class="goods-date">{{curMsg.day}}</view>
+  <view class="goods-box">
+    <view class="goods-title">
+      <i>——————</i>
+      <view class="goods-title_name">{{goodsName}}</view>
+      <i>——————</i>
+    </view>
+    <view class="goods-content">
+      <view class="goods-content_item">
+        <view class="label1"><i>开：</i> {{curMsg.open}}</view>
+        <view class="label2"><i>收：</i>{{curMsg.close}}</view>
+        <view class="label3 up"
+              wx:if="{{curMsg.open<=curMsg.close}}"><i>涨：</i>{{wxFormat.upsAndDowns(curMsg.open,curMsg.close,'up')}}</view>
+        <view class="label3 down"
+              wx:if="{{curMsg.open>curMsg.close}}"><i>跌：</i>-{{wxFormat.upsAndDowns(curMsg.open,curMsg.close,'down')}}</view>
+      </view>
+      <view class="goods-content_item">
+        <view class="label4"><i>高：</i> {{curMsg.high}}</view>
+        <view class="label5"><i>低：</i>{{curMsg.low}}</view>
+        <view class="label6"><i>量：</i>{{curMsg.volume}}</view>
+      </view>
+      <view class="goods-date">{{curMsg.day}}</view>
+    </view>
+  </view>
   <scroll-view class="scroll_box"
                style="width:{{wWidth-yWidth}}px;height:{{cHeight}}px;position:absolute;"
                scroll-x
@@ -233,10 +349,15 @@ import apiUtil from '../api/apiUtil';
 import kLinesDatas from '../utils/datas';
 import titlebar from '../components/title-bar-zl';
 import drawKLinesUtil from '../utils/drawKLinesUtil'
+import wxFormat from '../wxs/format.wxs'
 export default class Index extends wepy.page {
   config = {
     navigationBarTitleText: '策略学习'
   };
+
+  wxs = {
+    wxFormat: wxFormat
+  }
 
   components = {
     titlebar: titlebar
@@ -245,17 +366,22 @@ export default class Index extends wepy.page {
   data = {
     wWidth: 0,
     wHeight: 0,
-    yWidth: 50,
+    yWidth: 60,
     xHeight: 50,
-    cHeight: 300,
+    cHeight: 240,
     goodsId: null,
-    goodsName: '隆平高科',
+    goodsName: 'BTC/USDT',
     goodsCode: null,
     maincWidth: 0,  // mainCanvas 画布宽度
     kDatas: [],
     curMsg: {},
     isScroll: false,
     mainCanvasImg: null,  // 画布生成的图片地址
+    accountMsg: {
+      startAssets: '1000',
+      curAssets: '1105',
+      earningRate: '10.5%'
+    },
     tradeSignList: [
       {
         type: 'buy',
@@ -264,7 +390,7 @@ export default class Index extends wepy.page {
       },
       {
         type: 'sell',
-        time: '2019-07-11 10:12:23',
+        time: '2019-07-11 10:30:00',
         price: '22.61'
       },
       // {
@@ -403,7 +529,6 @@ export default class Index extends wepy.page {
     drawKLinesUtil.onDrawYAxis()
     drawKLinesUtil.onDrawXAxis()
     drawKLinesUtil.onDrawKLines()
-    drawKLinesUtil.onDrawTradeSign()
   }
 
   onTouchStart (e) {
