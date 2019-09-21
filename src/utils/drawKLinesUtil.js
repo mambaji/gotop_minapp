@@ -158,7 +158,7 @@ function onDrawXAxis () {
 /**
  * @desc 绘制K线
  */
-function onDrawKLines () {
+function onDrawKLines (result) {
   let yNumpx = (config.maincHeight - config.xHeight - config.yMargin) / (config.maxNum - config.minNum)
   let startX = 0
   let startY = 0
@@ -169,6 +169,7 @@ function onDrawKLines () {
   let signIndex = 0
   for (let i = 0; i < config.datas.length; i++) {
     onForDrawKLines(i, yNumpx, parseFloat(config.datas[i].open), parseFloat(config.datas[i].close), parseFloat(config.datas[i].high), parseFloat(config.datas[i].low), startX, startY, endX, endY, lowpx, highpx)
+    // 绘制信号
     const kD = new Date(config.datas[i].day)
     const signD = new Date(config.signsList[signIndex].time)
     let lastD = null
@@ -191,7 +192,11 @@ function onDrawKLines () {
       signIndex < config.signsList.length - 1 && (signIndex = signIndex + 1)
     }
   }
-  config.mainctx.draw()
+  if (result) {
+    result()
+  } else {
+    config.mainctx.draw()
+  }
 }
 
 /**
@@ -333,48 +338,6 @@ function onDrawTradeSign (kIndex, i) {
   config.mainctx.stroke()
 }
 
-function onDrawTradeSign_t (i) {
-  let startD = new Date(config.datas[0].day)
-  let endD = new Date(config.datas[config.datas.length - 1].day)
-  let startTimeStamp = startD.getTime(startD) / 1000
-  let endTimeStamp = endD.getTime(endD) / 1000
-  let unitTimeStampPX = (config.mainCWidth - config.main_margin_left) / (endTimeStamp - startTimeStamp) // 每单位时间戳是多少px
-  let signD = new Date(config.signsList[i].time)
-  let signTimeStamp = signD.getTime(signD) / 1000
-  let signPositionPX = (signTimeStamp - startTimeStamp) * unitTimeStampPX //  计算出当前sign在哪个位置
-  let kIndex = Math.ceil(signPositionPX / (config.kWidth + config.k_margin_right))  // 计算当前sign位于哪个K线上面
-  console.log('kIndex==', signTimeStamp - startTimeStamp, unitTimeStampPX, signPositionPX, (config.kWidth + config.k_margin_right))
-  let curMsg = config.datas[kIndex]
-  let yNumpx = (config.maincHeight - config.xHeight - config.yMargin) / (config.maxNum - config.minNum)
-  let centerX = config.main_margin_left + (config.kWidth + config.k_margin_right) * kIndex + (config.kWidth / 2)
-  let centerY = 0
-  let r = (config.kWidth + config.k_margin_right) / 2
-  let signType
-  if (config.signsList[i].type == 'buy') {
-    signType = '买'
-    centerY = config.maincHeight - config.xHeight - config.yMargin / 2 - (curMsg.low - config.minNum) * yNumpx + r
-    config.mainctx.setFillStyle(config.buy_sign_bg)
-  } else {
-    signType = '卖'
-    centerY = config.maincHeight - config.xHeight - config.yMargin / 2 - (curMsg.high - config.minNum) * yNumpx - r
-    config.mainctx.setFillStyle(config.sell_sign_bg)
-  }
-  config.mainctx.arc(centerX, centerY, r, 0, 2 * Math.PI)
-  config.mainctx.fill()
-
-  config.mainctx.beginPath()
-  config.mainctx.setFontSize(12)
-  config.mainctx.setFillStyle('#fff')
-  config.mainctx.fillText(signType, (centerX - r / 2), centerY + r / 3)
-  config.mainctx.stroke()
-
-  config.mainctx.beginPath()
-  config.mainctx.setFontSize(13)
-  config.mainctx.setFillStyle('#333')
-  config.mainctx.fillText(config.signsList[i].price, centerX + r + 5, centerY + r / 2)
-  config.mainctx.stroke()
-}
-
 /**
  * @desc 求y轴每间隔距离是多大
  * @param {y轴最小值} min 
@@ -421,6 +384,7 @@ function onTouch (touchX) {
 
 
 module.exports = {
+  config,
   init,
   onScroll,
   onTouch,

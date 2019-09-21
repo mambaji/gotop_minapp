@@ -9,14 +9,34 @@ import 'wepy-async-function';
 
 export default class extends wepy.app {
   config = {
-    pages: ['pages/index', 'pages/landscape', 'pages/tradeOrder', 'pages/tradeSign'],
+    pages: ['pages/index', 'pages/about', 'pages/landscape', 'pages/tradeOrder', 'pages/tradeSign'],
     window: {
       backgroundTextStyle: 'light',
       navigationBarBackgroundColor: '#fff',
       navigationBarTitleText: 'WeChat',
       navigationBarTextStyle: 'black',
       navigationStyle: 'custom'
-    }
+    },
+    tabBar: {
+      color: '#515151',
+      selectedColor: '#515151',
+      borderStyle: 'white',
+      backgroundColor: '#ffffff',
+      list: [
+        {
+          pagePath: 'pages/index',
+          text: '策略学习',
+          iconPath: '/images/celue.png',
+          selectedIconPath: '/images/celue_select.png'
+        },
+        {
+          pagePath: 'pages/about',
+          text: '关于我们',
+          iconPath: '/images/about.png',
+          selectedIconPath: '/images/about_select.png'
+        }
+      ]
+    },
   };
 
   globalData = {

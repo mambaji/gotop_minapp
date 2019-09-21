@@ -2,91 +2,135 @@
 .scroll_box {
   overflow: auto;
 }
-.canvas {
-}
 .top-box {
-  height: 30px;
   display: flex;
   align-items: center;
   padding-left: 15px;
-  padding-top: 10px;
+  margin-top: 10px;
+}
+.top-box_msg {
+  display: flex;
+  align-items: center;
+  height: 60px;
+  padding-left: 15px;
+  border-radius: 5px;
+  margin-left: 10px;
+  background: #1e88e5;
+  padding-right: 20px;
 }
 .goods-name {
   font-size: 16px;
   font-weight: bold;
-  margin-left: 15px;
+  background: #fff;
+  border-radius: 5px;
+  color: #333;
+  padding: 5px;
+}
+.goods-price-box {
+  font-size: 13px;
+  flex-grow: 1;
+  color: #fff;
+  margin-left: 14px;
+  .box1 {
+    display: flex;
+    align-items: center;
+    // justify-content: space-around;
+  }
+  .box2 {
+    display: flex;
+    align-items: center;
+    // justify-content: space-around;
+    margin-top: 10px;
+  }
+  i {
+    color: #c0e2fd;
+  }
 }
 .close-price {
   font-size: 20px;
-  color: #e64340;
-  margin-left: 15px;
+  color: #fff;
 }
 .goods-high {
-  font-size: 14px;
-  margin-left: 15px;
-  text {
-    color: #e64340;
-    font-weight: bold;
-  }
 }
 .goods-low {
-  font-size: 14px;
-  margin-left: 15px;
-  text {
-    color: #09bb07;
-    font-weight: bold;
-  }
+  margin-left: 20px;
 }
 .goods-open {
-  font-size: 14px;
-  margin-left: 15px;
+}
+.goods-close {
+  margin-left: 20px;
+}
+.goods-up {
+  margin-left: 20px;
+}
+.goods-down {
+  margin-left: 20px;
 }
 .goods-volume {
-  font-size: 14px;
+  margin-left: 20px;
 }
 .goods-date {
-  font-size: 12px;
-  height: 20px;
-  color: #999;
-  padding-left: 15px;
-  border-bottom: 1rpx solid #cdcdcd;
+  color: #c0e2fd;
+  margin-left: 20px;
 }
 .close-img {
-  width: 24px;
-  height: 24px;
+  background: #fff;
+  box-shadow: 0rpx 1rpx 10rpx 0rpx #cbcdd5;
+  border-radius: 10rpx;
+  text-align: center;
+  padding: 5px;
+  image {
+    width: 24px;
+    height: 24px;
+  }
 }
 </style>
 <template>
   <view class="top-box">
-    <image @tap.stop="onBack"
-           class="close-img"
-           src="../images/back.png"
-           lazy-load="false">
-    </image>
-    <view class="goods-name">{{goodsName}}</view>
-    <view class="close-price">{{curMsg.close}}</view>
-    <view class="goods-high">高 <text>{{curMsg.high}}</text></view>
-    <view class="goods-low">低 <text>{{curMsg.low}}</text></view>
-    <view class="goods-open">开 <text>{{curMsg.open}}</text></view>
-    <!-- <view class="goods-volume">量 <text>{{curMsg.volume}}</text></view> -->
+    <view class="close-img">
+      <image @tap.stop="onBack"
+             src="../images/back.png"
+             lazy-load="false">
+      </image>
+    </view>
+    <view class="top-box_msg">
+      <view class="goods-name">{{goodsName}}</view>
+      <view class="goods-price-box">
+        <view class="box1">
+          <view class="goods-open"><i>开：</i>{{curMsg.open}}</view>
+          <view class="goods-close"><i>收：</i>{{curMsg.close}}</view>
+          <view class="goods-up"
+                wx:if="{{curMsg.open<=curMsg.close}}"><i>涨：</i>{{wxFormat.upsAndDowns(curMsg.open,curMsg.close,'up')}}</view>
+          <view class="goods-down"
+                wx:if="{{curMsg.open>curMsg.close}}"><i>跌：</i>-{{wxFormat.upsAndDowns(curMsg.open,curMsg.close,'down')}}</view>
+        </view>
+        <view class="box2">
+          <view class="goods-high"><i>高：</i>{{curMsg.high}}</view>
+          <view class="goods-low"><i>低：</i>{{curMsg.low}}</view>
+          <view class="goods-volume"><i>量：</i>{{curMsg.volume}}</view>
+          <view class="goods-date">{{curMsg.day}}</view>
+        </view>
+      </view>
+    </view>
   </view>
-  <view class="goods-date">{{curMsg.day}}</view>
+
+  <view class="canvas-box">
+    <scroll-view class="scroll_box"
+                 style="width:{{wWidth-yWidth}}px;height:{{cHeight}}px;position:absolute;"
+                 scroll-x
+                 bindscroll="onScroll"
+                 bindtouchend="onTouchEnd"
+                 bindtouchstart="onTouchStart">
+      <canvas style="width:{{maincWidth}}px;height:{{cHeight}}px;position:absolute;background:#fff;"
+              canvas-id="mainContent"></canvas>
+      <canvas class="canvas"
+              style="width:{{maincWidth}}px;height:{{cHeight}}px;"
+              canvas-id="select-k-canvas"></canvas>
+    </scroll-view>
+  </view>
   <canvas class="y-axis"
-          style="width:{{yWidth}}px;height:{{cHeight}}px;position:absolute"
+          style="width:{{yWidth}}px;height:{{cHeight}}px;margin-left:{{wWidth-yWidth}}px;background:#fff;"
           canvas-id="yAxis"></canvas>
-  <scroll-view class="scroll_box"
-               style="width:{{wWidth-yWidth}}px;height:{{cHeight}}px;margin-left:{{yWidth}}px;"
-               scroll-x
-               bindscroll="onScroll"
-               bindtouchend="onTouchEnd"
-               bindtouchstart="onTouchStart">
-    <canvas class="canvas"
-            style="width:{{maincWidth}}px;height:{{cHeight}}px;position:absolute;"
-            canvas-id="mainContent"></canvas>
-    <canvas class="canvas"
-            style="width:{{maincWidth}}px;height:{{cHeight}}px;"
-            canvas-id="select-k-canvas"></canvas>
-  </scroll-view>
 </template>
 
 <script>
@@ -94,6 +138,8 @@ import wepy from 'wepy';
 import drawAxisUtil from '../utils/draw-axis';
 import apiUtil from '../api/apiUtil';
 import kLinesDatas from '../utils/datas';
+import drawKLinesUtil from '../utils/drawKLinesUtil'
+import wxFormat from '../wxs/format.wxs'
 export default class landscape extends wepy.page {
   config = {
     pageOrientation: 'landscape'
@@ -101,39 +147,42 @@ export default class landscape extends wepy.page {
 
   components = {};
 
+  wxs = {
+    wxFormat: wxFormat
+  }
+
   data = {
-    landscape: 'landscape',
-    kselectCanvas: null,
     wWidth: 0,
     wHeight: 0,
-    yWidth: 50,
+    yWidth: 60,
     xHeight: 50,
-    cHeight: 200,
-    minData: 0,
-    maxData: 0,
+    cHeight: 240,
     goodsId: null,
-    goodsName: '隆平高科',
+    goodsName: 'BTC/USDT',
     goodsCode: null,
-    kLineView: null,
-    quotation: {},
-    quotePeriod: null,
-    values: [],
-    canvasLen: 0,
-    maincWidth: 0,
-    kWidth: 20,
-    kMarginRight: 5,
-    mainMarginLeft: 15,
-    scrollLeft: 0, //滚动条滚动的位置
-    touchEnd: 0, // 点击canvas的位置
+    maincWidth: 0,  // mainCanvas 画布宽度
     kDatas: [],
     curMsg: {},
-    isScroll: false
+    isScroll: false,
+    mainCanvasImg: null,  // 画布生成的图片地址
+    tradeSignList: [
+      {
+        type: 'buy',
+        time: '2019-07-09 11:12:23',
+        price: '22.32'
+      },
+      {
+        type: 'sell',
+        time: '2019-07-11 10:30:00',
+        price: '22.61'
+      }
+    ],
   };
 
-  onLoad() {
+  onLoad () {
     let _t = this;
     wx.getSystemInfo({
-      success(res) {
+      success (res) {
         console.log(res);
         _t.wWidth = res.windowWidth;
         _t.wHeight = res.windowHeight;
@@ -143,141 +192,85 @@ export default class landscape extends wepy.page {
     this._onGetKLinesData();
   }
 
-  _onGetKLinesData() {
+  _onGetKLinesData () {
     this.kDatas = kLinesDatas.kLines;
     this.curMsg = this.kDatas[this.kDatas.length - 1];
-    // apiUtil.onGetKLinesApi({}, res => {
-    //   res.data.replace(/day/g, "days")
-    //   res.data.replace('open', '"open"')
-    //   res.data.replace('close', '"close"')
-    //   res.data.replace('low', '"low"')
-    //   res.data.replace('high', '"high"')
-    //   res.data.replace('volume', '"volume"')
-    //   this.kDatas = res.data
     console.log('===', this.kDatas);
-    this.onCanvas();
+    this._onDrawInit();
+    this._onCanvasMain()
     //   this.$apply()
     // })
   }
 
-  onCanvas() {
-    const data = this.kDatas;
+
+  // 绘制初始化
+  _onDrawInit () {
+    const datas = this.kDatas
+    const yctx = wx.createCanvasContext('yAxis')
+    const mainctx = wx.createCanvasContext('mainContent')
+    const optctx = wx.createCanvasContext('select-k-canvas')
     const minData = Math.min.apply(
       Math,
-      data.map(function(o) {
+      datas.map(function (o) {
         return o.low;
       })
     );
     const maxData = Math.max.apply(
       Math,
-      data.map(function(o) {
+      datas.map(function (o) {
         return o.high;
       })
     );
-    this.minData = minData;
-    this.maxData = maxData;
-    this.kselectCanvas = wx.createCanvasContext('select-k-canvas');
-    // 绘制纵坐标
-    const yctx = wx.createCanvasContext('yAxis');
-    const ystyle = {
-      color: '#cdcdcd'
-    };
-    const points = drawAxisUtil.onDrawYAxis(
-      yctx,
-      minData,
-      maxData,
-      ystyle,
-      this.xHeight,
-      this.cHeight,
-      this.yWidth
-    );
-    // 绘制横坐标
-    let xctx = wx.createCanvasContext('mainContent');
-    this.mainCanvas = xctx;
-    const xstyle = {
-      color: '#cdcdcd'
-    };
-    this.maincWidth =
-      (this.kWidth + this.kMarginRight) * this.kDatas.length +
-      this.mainMarginLeft;
-    this.maincWidth < this.wWidth - this.yWidth &&
-      (this.maincWidth = this.wWidth - this.yWidth);
-    console.log(this.maincWidth);
-    drawAxisUtil.onDrawXAxis(
-      xctx,
-      points,
-      this.kWidth,
-      this.kDatas.length,
-      this.xHeight,
-      this.cHeight,
-      this.maincWidth,
-      this.wWidth - this.yWidth,
-      1,
-      xstyle,
-      data
-    );
-    // 绘制k线图
-    drawAxisUtil.onDrawKLines(
-      xctx,
-      this.cHeight,
-      this.xHeight,
-      this.kDatas,
-      minData,
-      maxData
-    );
+    let config = {
+      wWidth: this.wWidth,
+      wHeight: this.wHeight,
+      datas: datas,
+      signsList: this.tradeSignList,
+      kNum: datas.length,
+      yctx: yctx,
+      mainctx: mainctx,
+      optctx: optctx,
+      minNum: minData,
+      maxNum: maxData,
+      ycWidth: this.yWidth,
+      ycHeight: this.cHeight,
+      maincHeight: this.cHeight,
+      kWidth: 15,
+      k_margin_right: 10,
+      main_margin_left: 15,
+      screen_show_time: 2,
+      mainBgColor: '#fff'
+    }
+    this.maincWidth = drawKLinesUtil.init(config)
   }
 
-  onTouchStart(e) {
+  // 开始绘制
+  _onCanvasMain () {
+    drawKLinesUtil.onDrawYAxis()
+    drawKLinesUtil.onDrawXAxis()
+    drawKLinesUtil.onDrawKLines()
+  }
+
+  onTouchStart (e) {
     this.isScroll = false;
-    console.log('start:', e);
   }
 
-  onTouchEnd(e) {
+  onTouchEnd (e) {
     if (this.isScroll) {
       return;
     }
-    this.touchEnd = e.changedTouches[0].pageX - this.yWidth;
-    const kn = Math.ceil(
-      (this.scrollLeft +
-        e.changedTouches[0].pageX -
-        this.yWidth -
-        this.mainMarginLeft) /
-        (this.kWidth + this.kMarginRight)
-    );
-    this.curMsg = this.kDatas[kn - 1];
-    drawAxisUtil.onDrawLineBorder(
-      this.kselectCanvas,
-      this.cHeight,
-      this.xHeight,
-      this.minData,
-      this.maxData,
-      this.kDatas[kn - 1],
-      kn - 1
-    );
+    this.curMsg = drawKLinesUtil.onTouch(e.changedTouches[0].pageX)
   }
 
-  onScroll(e) {
-    const kn = Math.ceil(
-      (e.detail.scrollLeft + this.wWidth - this.yWidth - this.mainMarginLeft) /
-        (this.kWidth + this.kMarginRight)
-    );
-    this.curMsg = this.kDatas[kn - 1];
-    drawAxisUtil.onDrawLineBorder(
-      this.kselectCanvas,
-      this.cHeight,
-      this.xHeight,
-      this.minData,
-      this.maxData,
-      this.kDatas[kn - 1],
-      kn - 1,
-      true
-    );
-    this.scrollLeft = e.detail.scrollLeft;
+  onScroll (e) {
+    this.curMsg = drawKLinesUtil.onScroll(e.detail.scrollLeft)
     this.isScroll = true;
   }
 
+
+
   methods = {
-    onBack() {
+    onBack () {
       wepy.navigateBack({
         delta: 1 //返回的页面数，如果 delta 大于现有页面数，则返回到首页,
       });

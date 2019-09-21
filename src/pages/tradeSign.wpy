@@ -3,67 +3,40 @@
             leftArrow="true"
             titleName="交易信号"
             bgcolor=""></titlebar>
-  <view class="head-container">
-    <view class="label1">信号类型</view>
-    <view class="label2">时间</view>
-    <view class="babel3">价格</view>
-  </view>
-  <repeat for="{{tradeSignList}}"
-          key="index"
-          index="index"
-          item="item">
-    <view class="trade-sign_content">
-      <view class="{{item.type=='buy'?'label1-buy':'label1-sell'}}">{{item.type}}</view>
-      <view class="label2">{{item.time}}</view>
-      <view class="{{item.type=='buy'?'label1-buy':'label1-sell'}}">${{item.price}}</view>
-    </view>
-  </repeat>
+  <signList :tradeSignList.sync="tradeSignList"></signList>
 </template>
 <script>
 import wepy from 'wepy'
 import titlebar from '../components/title-bar-zl'
+import signList from '../components/sign-list'
 export default class tradeSign extends wepy.page {
   components = {
-    titlebar: titlebar
+    titlebar: titlebar,
+    signList: signList
   }
 
   data = {
     tradeSignList: [
       {
         type: 'buy',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
+        time: '2019-07-09 11:12:23',
+        price: '22.32'
       },
       {
         type: 'sell',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
-      },
-      {
-        type: 'buy',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
-      },
-      {
-        type: 'sell',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
-      }, {
-        type: 'buy',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
-      },
-      {
-        type: 'buy',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
-      },
-      {
-        type: 'sell',
-        time: '2019-09-17 10:12:23',
-        price: '25.25'
+        time: '2019-07-11 10:30:00',
+        price: '22.61'
       }
     ],
+  }
+
+  onLoad () {
+    this._onLoadSignData();
+  }
+
+
+  _onLoadSignData () {
+    this.$invoke('signList', 'onUpdateData', this.tradeSignList)
   }
 
   methods = {
@@ -76,41 +49,7 @@ export default class tradeSign extends wepy.page {
 }
 </script>
 <style lang="less" scoped>
-.head-container {
-  width: 100%;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  font-size: 30rpx;
-  box-sizing: border-box;
-  border-top: 1rpx solid #f2f2f2;
-  border-bottom: 1rpx solid #f2f2f2;
-  height: 80rpx;
-  margin-bottom: 20rpx;
-}
-.trade-sign_content {
-  width: 100%;
-  padding: 10rpx 20rpx;
-  display: flex;
-  justify-content: space-around;
-  font-size: 28rpx;
-  box-sizing: border-box;
-  .label1-buy {
-    color: #27ae5b;
-    font-weight: bold;
-    width: 25%;
-    text-align: center;
-  }
-  .label1-sell {
-    color: #e31a20;
-    font-weight: bold;
-    width: 25%;
-    text-align: center;
-  }
-  .label2 {
-    color: #666;
-    width: 50%;
-    text-align: center;
-  }
+page {
+  background: #f8f9fc;
 }
 </style>

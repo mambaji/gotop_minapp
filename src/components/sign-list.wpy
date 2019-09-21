@@ -1,0 +1,62 @@
+<template>
+  <repeat for="{{tradeSignList}}"
+          key="index"
+          index="index"
+          item="item">
+    <view class="sign-item"
+          wx:if="{{limit==0 || limit>index}}">
+      <view class="sign-item_type"
+            style="{{item.type=='buy'?'background:#E31A20;':'background:#27AE5B;'}}color:#fff;font-size:28rpx; ">{{item.type=='buy'?'买入信号':'卖出信号'}}</view>
+      <view class="sign-item_time">{{item.time}}</view>
+      <view class="sign-item_price">{{item.price}}</view>
+    </view>
+  </repeat>
+</template>
+<script>
+import wepy from 'wepy'
+export default class signList extends wepy.component {
+
+  props = {
+    tradeSignList: [],
+    limit: {
+      type: Number,
+      default: 0
+    }
+  }
+
+  data = {
+
+  }
+
+  onLoad () {
+
+  }
+
+  methods = {
+    onUpdateData (e) {
+      this.tradeSignList = e
+    }
+  }
+}
+</script>
+<style lang="less" scoped>
+.sign-item {
+  width: 94%;
+  margin-left: 3%;
+  box-shadow: 0rpx 1rpx 10rpx 0rpx #dfdede;
+  margin-top: 15rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 20rpx;
+  background: #fff;
+  font-size: 30rpx;
+  box-sizing: border-box;
+  border-radius: 10rpx;
+}
+.sign-item_type {
+  padding: 2rpx 8rpx;
+  border-radius: 8rpx;
+  border: 1rpx solid #333;
+}
+</style>

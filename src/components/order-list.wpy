@@ -1,0 +1,105 @@
+<template>
+  <repeat for="{{orderList}}"
+          key="index"
+          index="index"
+          item="item">
+    <view class="order-item"
+          wx:if="{{limit==0 || limit>index}}">
+      <view class="order-item_top">
+        <text class="time">{{item.time}}</text>
+        <text class="type"
+              style="font-weight:bold;color:{{(item.type==1||item.type==3)?'#E31A20':'#27AE5B'}}">{{formatUtil.formatterOrderType(item.type)}}</text>
+        <text class="status"
+              style="font-weight:bold;color:{{formatUtil.formatterOrderStatusColor(item.status)}};">{{formatUtil.formatterOrderStatus(item.status)}}</text>
+      </view>
+      <view class="order-item_content">
+        <view class="commission-price item"><i>委托价格</i>{{item.commission_price==null?'--':item.commission_price}}</view>
+        <view class="transaction-average-price item"><i>成交均价</i>{{item.transaction_average_price==null?'--':item.transaction_average_price}}</view>
+        <view class="transaction-num item"><i>成交数</i>{{item.transaction_num==null?'--':item.transaction_num}}</view>
+        <view class="commission-num item"
+              wx-if="{{item.type!=1}}"><i>委托数</i>{{item.commission_num==null?'--':item.commission_num}}</view>
+        <view class="no-transaction-num item"
+              wx-if="{{item.type!=1}}"><i>未成交数</i>{{item.no_transaction_num==null?'--':item.no_transaction_num}}</view>
+        <view class="commission-amount item"
+              wx-if="{{item.type==1}}"><i>委托金额</i>{{item.commission_amount==null?'--':item.commission_amount}}</view>
+        <view class="no-transaction-amount item"
+              wx-if="{{item.type==1}}"><i>未成交金额</i>{{item.no_transaction_amount==null?'--':item.no_transaction_amount}}</view>
+      </view>
+    </view>
+  </repeat>
+</template>
+<script>
+import wepy from 'wepy'
+import formatUtil from '../wxs/format.wxs'
+export default class orderList extends wepy.component {
+  props = {
+    orderList: [
+    ],
+    limit: {
+      type: Number,
+      default: 0
+    }
+  }
+
+  wxs = {
+    formatUtil: formatUtil
+  }
+
+  data = {
+
+  }
+
+  methods = {
+    onUpdateData (e) {
+      this.orderList = e
+    }
+  }
+}
+</script>
+<style lang="less" scoped>
+.order-item {
+  width: 94%;
+  margin-left: 3%;
+  background: #fff;
+  border-radius: 5rpx;
+  box-shadow: 0rpx 1rpx 10rpx 0rpx #dfdede;
+  box-sizing: border-box;
+  margin-top: 20rpx;
+}
+.order-item_top {
+  display: flex;
+  align-items: center;
+  height: 80rpx;
+  justify-content: space-around;
+  font-size: 28rpx;
+  border-bottom: 1rpx solid #dfdede;
+  .time {
+    padding-left: 20rpx;
+    padding-right: 20rpx;
+    border-right: 1rpx solid #333;
+  }
+  .type {
+    margin-left: 20rpx;
+  }
+  .status {
+    flex-grow: 1;
+    margin-right: 20rpx;
+    text-align: right;
+  }
+}
+.order-item_content {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 20rpx;
+  font-size: 28rpx;
+  line-height: 60rpx;
+}
+.item {
+  margin-left: 30rpx;
+  i {
+    color: #999;
+    margin-right: 15rpx;
+  }
+}
+</style>

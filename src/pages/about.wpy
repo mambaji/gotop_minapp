@@ -1,0 +1,19 @@
+<template>
+  <view>关于我们</view>
+</template>
+<script>
+import wepy from 'wepy'
+export default class about extends wepy.page {
+  data = {}
+
+  onLoad () {
+
+  }
+
+  methods = {
+
+  }
+}
+</script>
+<style lang="less" scoped>
+</style>
