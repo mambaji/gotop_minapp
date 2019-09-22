@@ -170,26 +170,27 @@ function onDrawKLines (result) {
   for (let i = 0; i < config.datas.length; i++) {
     onForDrawKLines(i, yNumpx, parseFloat(config.datas[i].open), parseFloat(config.datas[i].close), parseFloat(config.datas[i].high), parseFloat(config.datas[i].low), startX, startY, endX, endY, lowpx, highpx)
     // 绘制信号
-    const kD = new Date(config.datas[i].day)
-    const signD = new Date(config.signsList[signIndex].time)
-    let lastD = null
-    let lastTimeStamp = null
-    if (i != 0) {
-      lastD = new Date(config.datas[i - 1].day)
-      lastTimeStamp = lastD.getTime(lastTimeStamp) / 1000
-    }
-    const kTimeStamp = kD.getTime(kD) / 1000
-    const signTimeStamp = signD.getTime(signD) / 1000
-    console.log(lastTimeStamp, kTimeStamp, signTimeStamp)
-    if (kTimeStamp == signTimeStamp) {
-      onDrawTradeSign(i, signIndex)
-      signIndex < config.signsList.length - 1 && (signIndex = signIndex + 1)
-    } else if (i != 0 && lastTimeStamp == signTimeStamp) {
-      onDrawTradeSign(i - 1, signIndex)
-      signIndex < config.signsList.length - 1 && (signIndex = signIndex + 1)
-    } else if (kTimeStamp > signTimeStamp && i != 0 && signTimeStamp > lastTimeStamp) {
-      onDrawTradeSign(i, signIndex)
-      signIndex < config.signsList.length - 1 && (signIndex = signIndex + 1)
+    if (config.signsList.length > 0) {
+      const kD = new Date(config.datas[i].day)
+      const signD = new Date(config.signsList[signIndex].time)
+      let lastD = null
+      let lastTimeStamp = null
+      if (i != 0) {
+        lastD = new Date(config.datas[i - 1].day)
+        lastTimeStamp = lastD.getTime(lastTimeStamp) / 1000
+      }
+      const kTimeStamp = kD.getTime(kD) / 1000
+      const signTimeStamp = signD.getTime(signD) / 1000
+      if (kTimeStamp == signTimeStamp) {
+        onDrawTradeSign(i, signIndex)
+        signIndex < config.signsList.length - 1 && (signIndex = signIndex + 1)
+      } else if (i != 0 && lastTimeStamp == signTimeStamp) {
+        onDrawTradeSign(i - 1, signIndex)
+        signIndex < config.signsList.length - 1 && (signIndex = signIndex + 1)
+      } else if (kTimeStamp > signTimeStamp && i != 0 && signTimeStamp > lastTimeStamp) {
+        onDrawTradeSign(i, signIndex)
+        signIndex < config.signsList.length - 1 && (signIndex = signIndex + 1)
+      }
     }
   }
   if (result) {
@@ -259,7 +260,7 @@ function onDrawKLineBorder (isScroll = false) {
   let endX = 0
   let endY = 0
   let curMsg = config.curMsg
-  console.log(config.curIndex, config.curMsg)
+  console.log('curMsg==', curMsg)
   if (curMsg.open < curMsg.close) {
     startY = config.maincHeight - config.xHeight - (curMsg.close - config.minNum) * yNumpx - config.yMargin / 2
     endY = config.maincHeight - config.xHeight - (curMsg.open - config.minNum) * yNumpx - config.yMargin / 2
@@ -356,7 +357,6 @@ function onScroll (scrollLeft) {
     (scrollLeft + config.wWidth - config.ycWidth - config.main_margin_left) /
     (config.kWidth + config.k_margin_right)
   );
-  console.log(scrollLeft, config.wWidth, config.main_margin_left, config.kWidth, config.k_margin_right)
   config.curIndex = kn - 1
   config.scrollLeft = scrollLeft
   config.curMsg = config.datas[kn - 1]
@@ -377,9 +377,9 @@ function onTouch (touchX) {
   );
   config.curIndex = kn - 1
   config.curMsg = config.datas[kn - 1]
+  console.log(config.curIndex)
   onDrawKLineBorder()
   return config.curMsg
-
 }
 
 

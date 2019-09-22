@@ -1,6 +1,9 @@
 <style lang="less">
 @import './styles/icon';
 @import './styles/base';
+.click-hover-o {
+  opacity: 0.5;
+}
 </style>
 
 <script>

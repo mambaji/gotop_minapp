@@ -118,6 +118,7 @@
     <scroll-view class="scroll_box"
                  style="width:{{wWidth-yWidth}}px;height:{{cHeight}}px;position:absolute;"
                  scroll-x
+                 scroll-left="{{scrollToRight}}"
                  bindscroll="onScroll"
                  bindtouchend="onTouchEnd"
                  bindtouchstart="onTouchStart">
@@ -135,7 +136,6 @@
 
 <script>
 import wepy from 'wepy';
-import drawAxisUtil from '../utils/draw-axis';
 import apiUtil from '../api/apiUtil';
 import kLinesDatas from '../utils/datas';
 import drawKLinesUtil from '../utils/drawKLinesUtil'
@@ -163,6 +163,7 @@ export default class landscape extends wepy.page {
     maincWidth: 0,  // mainCanvas 画布宽度
     kDatas: [],
     curMsg: {},
+    scrollToRight: 0,
     isScroll: false,
     mainCanvasImg: null,  // 画布生成的图片地址
     tradeSignList: [
@@ -248,7 +249,15 @@ export default class landscape extends wepy.page {
   _onCanvasMain () {
     drawKLinesUtil.onDrawYAxis()
     drawKLinesUtil.onDrawXAxis()
-    drawKLinesUtil.onDrawKLines()
+    // scrollview 中嵌套canvas，scroll-left 必须在draw回调里面去实现，否则不起作用
+    drawKLinesUtil.onDrawKLines(res => {
+      let _t = this
+      drawKLinesUtil.config.mainctx.draw(false, function (res) {
+        console.log('scrollToRight===', _t.scrollToRight)
+        _t.scrollToRight = _t.maincWidth
+        _t.$apply()
+      })
+    })
   }
 
   onTouchStart (e) {
@@ -263,6 +272,7 @@ export default class landscape extends wepy.page {
   }
 
   onScroll (e) {
+    console.log('scroll===', e)
     this.curMsg = drawKLinesUtil.onScroll(e.detail.scrollLeft)
     this.isScroll = true;
   }

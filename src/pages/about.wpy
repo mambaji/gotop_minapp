@@ -1,10 +1,17 @@
 <template>
-  <view>关于我们</view>
+  <titlebar leftArrow=""
+            titleName="关于我们"
+            bgcolor=""></titlebar>
 </template>
 <script>
 import wepy from 'wepy'
+import titlebar from '../components/title-bar-zl';
 export default class about extends wepy.page {
   data = {}
+
+  components = {
+    titlebar: titlebar
+  }
 
   onLoad () {
 
@@ -15,5 +22,8 @@ export default class about extends wepy.page {
   }
 }
 </script>
-<style lang="less" scoped>
+<style lang="less">
+page {
+  background: #f5f8fd;
+}
 </style>

@@ -26,12 +26,17 @@ page {
   margin-top: 30rpx;
 }
 .account-title {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
   // font-weight: bold;
   font-size: 32rpx;
-  i {
-    font-weight: 500;
-    color: #c0e2fd;
+  .i {
+    background: #c0e2fd;
+  }
+  .line {
+    width: 30%;
+    height: 1px;
   }
 }
 .account-content {
@@ -68,6 +73,7 @@ page {
 }
 .goods-title {
   display: flex;
+  align-items: center;
   justify-content: center;
   .goods-title_name {
     font-size: 28rpx;
@@ -77,8 +83,12 @@ page {
     padding: 5rpx 15rpx;
     border-radius: 8rpx;
   }
-  i {
-    color: #dfdede;
+  .i {
+    background: #dfdede;
+  }
+  .line {
+    width: 30%;
+    height: 1px;
   }
 }
 .goods-content {
@@ -193,14 +203,14 @@ page {
   background: #1e88e5;
 }
 .show_more {
-  font-size: 28rpx;
+  font-size: 26rpx;
   width: 100%;
   text-align: right;
-  height: 50rpx;
-  line-height: 50rpx;
+  height: 60rpx;
+  line-height: 60rpx;
   color: #999;
   i {
-    font-size: 30rpx;
+    font-size: 26rpx;
     color: #999;
   }
 }
@@ -210,7 +220,9 @@ page {
             titleName="策略学习"
             bgcolor=""></titlebar>
   <view class="account-box">
-    <view class="account-title"><i>———————</i> 账户信息 <i>———————</i></view>
+    <view class="account-title">
+      <view class="i line"></view> 账户信息 <view class="i line"></view>
+    </view>
     <view class="account-content">
       <view class="account-item">
         <view class="label1">{{accountMsg.startAssets}}</view>
@@ -228,9 +240,9 @@ page {
   </view>
   <view class="goods-box">
     <view class="goods-title">
-      <i>——————</i>
+      <view class="i line"></view>
       <view class="goods-title_name">{{goodsName}}</view>
-      <i>——————</i>
+      <view class="i line"></view>
     </view>
     <view class="goods-content">
       <view class="goods-content_item">
@@ -252,6 +264,7 @@ page {
   <view class="canvas-box">
     <cover-view class="cover-view">
       <cover-image @tap.stop="onToLandscape"
+                   hover-class="click-hover-o"
                    class="scale-img"
                    src="../images/scale_big.png"
                    mode="scaleToFill"
@@ -270,10 +283,6 @@ page {
       <canvas class="canvas"
               style="width:{{maincWidth}}px;height:{{cHeight}}px;"
               canvas-id="select-k-canvas"></canvas>
-      <!-- <image src="{{mainCanvasImg}}"
-             style="width:{{maincWidth}}px;height:{{cHeight}}px;"
-             mode="scaleToFill"
-             lazy-load="false"> -->
       </image>
     </scroll-view>
   </view>
@@ -297,6 +306,7 @@ page {
       </view>
     </view>
     <view class="show_more"
+          hover-class="click-hover-o"
           @tap="onShowMore">
       更多<i class="iconfont icon-right"></i>
     </view>
@@ -312,7 +322,6 @@ page {
 
 <script>
 import wepy from 'wepy';
-import drawAxisUtil from '../utils/draw-axis';
 import apiUtil from '../api/apiUtil';
 import kLinesDatas from '../utils/datas';
 import titlebar from '../components/title-bar-zl';
