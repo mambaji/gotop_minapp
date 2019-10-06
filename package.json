@@ -17,6 +17,7 @@
   "author": "manbasji <276066021@qq.com>",
   "license": "MIT",
   "dependencies": {
+    "vant-weapp": "^1.0.0-beta.0",
     "wepy": "^1.6.0",
     "wepy-async-function": "^1.4.4",
     "wepy-com-toast": "^1.0.2"

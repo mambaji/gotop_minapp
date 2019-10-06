@@ -12,7 +12,7 @@ import 'wepy-async-function';
 
 export default class extends wepy.app {
   config = {
-    pages: ['pages/index', 'pages/about', 'pages/landscape', 'pages/tradeOrder', 'pages/tradeSign'],
+    pages: ['pages/index', 'pages/backtestDetail', 'pages/backtest', 'pages/about', 'pages/landscape', 'pages/tradeOrder', 'pages/tradeSign'],
     window: {
       backgroundTextStyle: 'light',
       navigationBarBackgroundColor: '#fff',
@@ -29,14 +29,14 @@ export default class extends wepy.app {
         {
           pagePath: 'pages/index',
           text: '策略学习',
-          iconPath: '/images/celue.png',
-          selectedIconPath: '/images/celue_select.png'
+          iconPath: './images/celue.png',
+          selectedIconPath: './images/celue_select.png'
         },
         {
           pagePath: 'pages/about',
           text: '关于我们',
-          iconPath: '/images/about.png',
-          selectedIconPath: '/images/about_select.png'
+          iconPath: './images/about.png',
+          selectedIconPath: './images/about_select.png'
         }
       ]
     },

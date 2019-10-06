@@ -214,11 +214,33 @@ page {
     color: #999;
   }
 }
+.backtest-box {
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: right;
+  background: #fff;
+  width: 100%;
+  font-size: 30rpx;
+  padding-right: 20rpx;
+  box-sizing: border-box;
+  color: #333;
+  border-bottom: 1rpx solid #cdcdcd;
+  border-top: 1rpx solid #f2f2f2;
+  i {
+    font-size: 30rpx;
+    margin-left: 15rpx;
+  }
+}
 </style>
 <template>
-  <titlebar leftArrow=""
+  <titlebar leftIcon="icon-user"
+            leftIconStyle="font-size:40rpx;color:#1e88e5"
+            leftText="登录"
             titleName="策略学习"
             bgcolor=""></titlebar>
+  <view class="backtest-box"
+        hover-class="click-hover-o"
+        @tap="onToBackTest">策略回测<i class="iconfont icon-right"></i></view>
   <view class="account-box">
     <view class="account-title">
       <view class="i line"></view> 账户信息 <view class="i line"></view>
@@ -331,7 +353,9 @@ import orderList from '../components/order-list'
 import wxFormat from '../wxs/format.wxs'
 export default class Index extends wepy.page {
   config = {
-    navigationBarTitleText: '策略学习'
+    navigationBarTitleText: '策略学习',
+    usingComponents: {
+    }
   };
 
   wxs = {
@@ -358,6 +382,7 @@ export default class Index extends wepy.page {
     curMsg: {},
     isScroll: false,
     scrollToRight: 0,
+    scrollLeft: null,
     mainCanvasImg: null,  // 画布生成的图片地址
     tab: 'sign', // sign or order
     accountMsg: {
@@ -375,7 +400,17 @@ export default class Index extends wepy.page {
         type: 'sell',
         time: '2019-07-11 10:30:00',
         price: '22.61'
-      }
+      },
+      {
+        type: 'buy',
+        time: '2019-07-22 15:00:00',
+        price: '21.41'
+      },
+      {
+        type: 'sell',
+        time: '2019-07-24 10:15:00',
+        price: '22.01'
+      },
     ],
     tradeOrderList: [
       {
@@ -439,7 +474,9 @@ export default class Index extends wepy.page {
         no_transaction_num: 1.00
       },
     ],
-    limit: 10
+    limit: 10,
+    isAdmin: true,
+    tabBarActive: 1
   };
 
   onLoad () {
@@ -450,12 +487,23 @@ export default class Index extends wepy.page {
         _t.wHeight = res.windowHeight;
       }
     });
+
+    wx.setTabBarItem({
+      index: 2,
+      text: 'text',
+      iconPath: '/path/to/iconPath',
+      selectedIconPath: '/path/to/selectedIconPath'
+    })
   }
 
   onShow () {
     this._onLoadSignData()
     this._onLoadOrderData()
     this._onGetKLinesData();
+    if (this.scrollLeft) {
+      drawKLinesUtil.config.scrollLeft = this.scrollLeft
+    }
+    console.log('scroll-left:', drawKLinesUtil.config.scrollLeft)
   }
 
   _onLoadSignData () {
@@ -497,7 +545,6 @@ export default class Index extends wepy.page {
       wHeight: this.wHeight,
       datas: datas,
       signsList: this.tradeSignList,
-      kNum: datas.length,
       yctx: yctx,
       mainctx: mainctx,
       optctx: optctx,
@@ -506,10 +553,6 @@ export default class Index extends wepy.page {
       ycWidth: this.yWidth,
       ycHeight: this.cHeight,
       maincHeight: this.cHeight,
-      kWidth: 15,
-      k_margin_right: 10,
-      main_margin_left: 15,
-      screen_show_time: 2,
       mainBgColor: '#fff'
     }
     this.maincWidth = drawKLinesUtil.init(config)
@@ -541,7 +584,7 @@ export default class Index extends wepy.page {
   }
 
   onScroll (e) {
-    console.log('scroll====', e)
+    this.scrollLeft = e.detail.scrollLeft
     this.curMsg = drawKLinesUtil.onScroll(e.detail.scrollLeft)
     this.isScroll = true;
   }
@@ -563,6 +606,22 @@ export default class Index extends wepy.page {
       } else if (type == 'order') {
         this.tab = 'order'
       }
+    },
+    onChange (e) {
+      console.log(e)
+      if (e.detail == 1) {
+        if (this.isAdmin) {
+          wepy.switchTab({ url: 'about' });
+        } else {
+
+        }
+      } else if (e.detail == 2) {
+
+      }
+    },
+    onToBackTest () {
+      wepy.navigateTo({ url: 'backtest' });
+
     }
   };
 }

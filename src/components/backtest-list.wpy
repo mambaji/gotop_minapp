@@ -1,0 +1,103 @@
+<template>
+  <repeat for="{{backTestList}}"
+          key="index"
+          index="index"
+          item="item">
+    <view class="log-item"
+          wx:if="{{limit==0 || limit>index}}">
+      <view class="log-item_top">
+        <text class="name">{{item.name}}</text>
+        <text class="time">{{item.time}}</text>
+        <text class="detail"
+              @tap="onToDetail">详情</text>
+      </view>
+      <view class="log-item_content">
+        <view class="item"><text class="label">币种</text><text class="item-goods">{{item.goods}}</text></view>
+        <view class="item"><text class="label">收益率</text><text class="item-return">{{item.return}}</text></view>
+        <view class="item"><text class="label">开始时间</text><text class="item-time">{{item.start_time}}</text></view>
+        <view class="item"><text class="label">结束时间</text><text class="item-time">{{item.end_time}}</text></view>
+      </view>
+    </view>
+  </repeat>
+</template>
+<script>
+import wepy from 'wepy'
+export default class backTestList extends wepy.component {
+  props = {
+    backTestList: [
+    ],
+    limit: {
+      type: Number,
+      default: 0
+    }
+  }
+
+  data = {
+
+  }
+
+  methods = {
+    onUpdateData (e) {
+      this.backTestList = e
+    },
+    onToDetail (e) {
+      this.$emit('click-detail', e)
+    }
+  }
+}
+</script>
+<style lang="less" scoped>
+.log-item {
+  width: 94%;
+  margin-left: 3%;
+  background: #fff;
+  border-radius: 5rpx;
+  box-shadow: 0rpx 1rpx 10rpx 0rpx #dfdede;
+  box-sizing: border-box;
+  margin-top: 20rpx;
+}
+.log-item_top {
+  display: flex;
+  align-items: center;
+  height: 80rpx;
+  font-size: 28rpx;
+  border-bottom: 1rpx solid #dfdede;
+  .name {
+    padding-left: 20rpx;
+    padding-right: 20rpx;
+    border-right: 1rpx solid #333;
+  }
+  .time {
+    margin-left: 20rpx;
+  }
+  .detail {
+    flex-grow: 1;
+    margin-right: 20rpx;
+    text-align: right;
+    color: #1e88e5;
+  }
+}
+.log-item_content {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 20rpx;
+  font-size: 28rpx;
+  line-height: 60rpx;
+}
+.label {
+  color: #cbcdd5;
+}
+.item-goods {
+  color: #ffc400;
+  margin-left: 10rpx;
+}
+.item-return {
+  color: #e31a20;
+  margin-left: 10rpx;
+}
+.item-time {
+  color: #333;
+  margin-left: 10rpx;
+}
+</style>

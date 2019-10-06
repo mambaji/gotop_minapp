@@ -1,0 +1,494 @@
+<style lang="less">
+page {
+  background: #f5f8fd;
+}
+.scroll_box {
+  overflow: auto;
+}
+.canvas-box {
+  position: relative;
+  margin-top: 40rpx;
+  background: #fff;
+  padding-top: 40rpx;
+}
+.y-axis {
+  // margin-top: 40rpx;
+}
+.cover-view {
+  position: absolute;
+  top: 5px;
+  left: 10px;
+  padding: 5rpx;
+  background: #fff;
+  border: 1rpx solid #f2f2f2;
+  box-shadow: 2rpx 2rpx 2rpx 2rpx #cbcdd5;
+  border-radius: 8rpx;
+  z-index: 9999;
+}
+.scale-img {
+  width: 50rpx;
+  height: 50rpx;
+  border-radius: 5rpx;
+}
+
+.sign-order-tabbox {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0rpx 50rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #dfdede;
+}
+.sign-order_content {
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1rpx solid #dfdede;
+}
+.sign_tab,
+.order_tab {
+  height: 60rpx;
+  padding: 5rpx 20rpx;
+  border-radius: 60rpx;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  .sign_tab_img,
+  .order_tab_img {
+    width: 48rpx;
+    height: 48rpx;
+  }
+  .sign_tab_label,
+  .order_tab_label {
+    font-size: 30rpx;
+    margin-left: 30rpx;
+  }
+}
+.active {
+  color: #fff;
+  background: #1e88e5;
+}
+.show_more {
+  font-size: 26rpx;
+  width: 100%;
+  text-align: right;
+  height: 60rpx;
+  line-height: 60rpx;
+  color: #999;
+  i {
+    font-size: 26rpx;
+    color: #999;
+  }
+}
+.result-box {
+  display: flex;
+  width: 100%;
+}
+.result-item {
+  display: inline-block;
+  width: 28%;
+  height: 150rpx;
+  line-height: 70rpx;
+  text-align: center;
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0px 1px 15px 0px #cbcdd5;
+  margin: 2.6%;
+  .value {
+    color: #1e88e5;
+    font-size: 34rpx;
+    font-weight: bold;
+  }
+  .name {
+    color: #333;
+    font-size: 28rpx;
+  }
+}
+</style>
+<template>
+  <titlebar leftArrow="true"
+            @click-left.user="onBack"
+            titleName="回测详情"
+            bgcolor=""></titlebar>
+  <repeat wx:for="{{resultList}}"
+          key="index"
+          index="index"
+          item="item">
+    <view class="result-item">
+      <view class="value">{{item.value}}</view>
+      <view class="name">{{item.name}}</view>
+    </view>
+  </repeat>
+  <view class="canvas-box">
+    <cover-view class="cover-view">
+      <cover-image @tap.stop="onToLandscape"
+                   hover-class="click-hover-o"
+                   class="scale-img"
+                   src="../images/scale_big.png"
+                   mode="scaleToFill"
+                   lazy-load="false">
+      </cover-image>
+    </cover-view>
+    <scroll-view class="scroll_box"
+                 style="width:{{wWidth-yWidth}}px;height:{{cHeight}}px;position:absolute;"
+                 scroll-x
+                 scroll-left="{{scrollToRight}}"
+                 bindscroll="onScroll"
+                 bindtouchend="onTouchEnd"
+                 bindtouchstart="onTouchStart">
+      <canvas style="width:{{maincWidth}}px;height:{{cHeight}}px;position:absolute;background:#fff;"
+              canvas-id="mainContent"></canvas>
+      <canvas class="canvas"
+              style="width:{{maincWidth}}px;height:{{cHeight}}px;"
+              canvas-id="select-k-canvas"></canvas>
+      </image>
+    </scroll-view>
+  </view>
+  <canvas class="y-axis"
+          style="width:{{yWidth}}px;height:{{cHeight}}px;margin-left:{{wWidth-yWidth}}px;background:#fff;"
+          canvas-id="yAxis"></canvas>
+  <view class="sign-order-tabbox">
+    <view class="sign-order_content">
+      <view class="sign_tab {{tab=='sign'?'active':''}}"
+            @tap="onTab('sign')">
+        <image class="sign_tab_img"
+               src="{{tab=='sign'?'../images/sign_select.png':'../images/sign.png'}}"></image>
+        <view class="sign_tab_label">策略信号</view>
+      </view>
+      <view style="height:100%;width:1rpx;background:#DFDEDE"></view>
+      <view class="order_tab {{tab=='order'?'active':''}}"
+            @tap="onTab('order')">
+        <image class="order_tab_img"
+               src="{{tab=='order'?'../images/tradelog_select.png':'../images/tradelog.png'}}"></image>
+        <view class="order_tab_label">交易订单</view>
+      </view>
+    </view>
+    <view class="show_more"
+          hover-class="click-hover-o"
+          @tap="onShowMore">
+      更多<i class="iconfont icon-right"></i>
+    </view>
+  </view>
+  <signList wx:if="{{tab=='sign'}}"
+            :limit.sync="limit"
+            :tradeSignList.sync="tradeSignList"></signList>
+  <orderList wx:if="{{tab=='order'}}"
+             :limit.sync="limit"
+             :orderList.sync="tradeOrderList"></orderList>
+  <view style="width:100%;height:80rpx;"></view>
+</template>
+
+<script>
+import wepy from 'wepy';
+import apiUtil from '../api/apiUtil';
+import kLinesDatas from '../utils/datas';
+import titlebar from '../components/title-bar-zl';
+import drawKLinesUtil from '../utils/drawKLinesUtil'
+import signList from '../components/sign-list'
+import orderList from '../components/order-list'
+import wxFormat from '../wxs/format.wxs'
+export default class backTestDetail extends wepy.page {
+  config = {
+    navigationBarTitleText: '策略学习',
+    usingComponents: {
+    }
+  };
+
+  wxs = {
+    wxFormat: wxFormat
+  }
+
+  components = {
+    titlebar: titlebar,
+    signList: signList,
+    orderList: orderList
+  };
+
+  data = {
+    wWidth: 0,
+    wHeight: 0,
+    yWidth: 60,
+    xHeight: 50,
+    cHeight: 240,
+    goodsId: null,
+    goodsName: 'BTC/USDT',
+    goodsCode: null,
+    maincWidth: 0,  // mainCanvas 画布宽度
+    kDatas: [],
+    curMsg: {},
+    isScroll: false,
+    scrollToRight: 0,
+    scrollLeft: null,
+    mainCanvasImg: null,  // 画布生成的图片地址
+    tab: 'sign', // sign or order
+    accountMsg: {
+      startAssets: '1000',
+      curAssets: '1105',
+      earningRate: '10.5%'
+    },
+    tradeSignList: [
+      {
+        type: 'buy',
+        time: '2019-07-09 11:12:23',
+        price: '22.32'
+      },
+      {
+        type: 'sell',
+        time: '2019-07-11 10:30:00',
+        price: '22.61'
+      },
+      {
+        type: 'buy',
+        time: '2019-07-22 15:00:00',
+        price: '21.41'
+      },
+      {
+        type: 'sell',
+        time: '2019-07-24 10:15:00',
+        price: '22.01'
+      },
+    ],
+    tradeOrderList: [
+      {
+        type: 1,
+        status: 1,
+        time: '2019-09-17 10:12:23',
+        commission_price: null,
+        commission_amount: 1055.25,
+        transaction_average_price: 1028.20,
+        transaction_num: 1.00,
+        no_transaction_amount: 35.00
+      },
+      {
+        type: 2,
+        status: -1,
+        time: '2019-09-17 10:12:23',
+        commission_num: 1.00,
+        commission_price: 1055.25,
+        transaction_average_price: null,
+        transaction_num: null,
+        no_transaction_num: 1.00
+      },
+      {
+        type: 3,
+        status: 1,
+        time: '2019-09-17 10:12:23',
+        commission_num: 1.00,
+        commission_price: 1050.23,
+        transaction_average_price: 1028.20,
+        transaction_num: 1.00,
+        no_transaction_num: 0.00
+      },
+      {
+        type: 4,
+        status: 2,
+        time: '2019-09-17 10:12:23',
+        commission_num: 1.00,
+        commission_price: 1050.23,
+        transaction_average_price: 1028.20,
+        transaction_num: 0.63,
+        no_transaction_num: 0.36
+      },
+      {
+        type: 4,
+        status: 0,
+        time: '2019-09-17 10:12:23',
+        commission_num: 1.00,
+        commission_price: 1050.23,
+        transaction_average_price: null,
+        transaction_num: null,
+        no_transaction_num: 1.00
+      },
+      {
+        type: 2,
+        status: 0,
+        time: '2019-09-17 10:12:23',
+        commission_num: 1.00,
+        commission_price: 1055.25,
+        transaction_average_price: null,
+        transaction_num: null,
+        no_transaction_num: 1.00
+      },
+    ],
+    resultList: [
+      {
+        name: '初始资产',
+        value: '1000'
+      },
+      {
+        name: '最终资产',
+        value: '1100'
+      },
+      {
+        name: '收益率',
+        value: '10%'
+      }, {
+        name: '最大回撤',
+        value: '15%'
+      },
+      {
+        name: '交易次数',
+        value: '159'
+      },
+      {
+        name: '盈利次数',
+        value: '89'
+      }, {
+        name: '亏损次数',
+        value: '70'
+      }, {
+        name: '最大盈利额',
+        value: '150'
+      },
+      {
+        name: '最大亏损额',
+        value: '100'
+      },
+    ],
+    limit: 10,
+    isAdmin: true,
+    tabBarActive: 1
+  };
+
+  onLoad () {
+    let _t = this;
+    wx.getSystemInfo({
+      success (res) {
+        _t.wWidth = res.windowWidth;
+        _t.wHeight = res.windowHeight;
+      }
+    });
+  }
+
+  onShow () {
+    this._onLoadSignData()
+    this._onLoadOrderData()
+    this._onGetKLinesData();
+    if (this.scrollLeft) {
+      drawKLinesUtil.config.scrollLeft = this.scrollLeft
+    }
+    console.log('scroll-left:', drawKLinesUtil.config.scrollLeft)
+  }
+
+  _onLoadSignData () {
+    this.$invoke('signList', 'onUpdateData', this.tradeSignList)
+  }
+
+  _onLoadOrderData () {
+    this.$invoke('orderList', 'onUpdateData', this.tradeOrderList)
+  }
+
+  // 获取数据
+  _onGetKLinesData () {
+    this.kDatas = kLinesDatas.kLines;
+    this.curMsg = this.kDatas[this.kDatas.length - 1];
+    this._onDrawInit();
+    this._onCanvasMain()
+  }
+
+  // 绘制初始化
+  _onDrawInit () {
+    const datas = this.kDatas
+    const yctx = wx.createCanvasContext('yAxis')
+    const mainctx = wx.createCanvasContext('mainContent')
+    const optctx = wx.createCanvasContext('select-k-canvas')
+    const minData = Math.min.apply(
+      Math,
+      datas.map(function (o) {
+        return o.low;
+      })
+    );
+    const maxData = Math.max.apply(
+      Math,
+      datas.map(function (o) {
+        return o.high;
+      })
+    );
+    let config = {
+      wWidth: this.wWidth,
+      wHeight: this.wHeight,
+      datas: datas,
+      signsList: this.tradeSignList,
+      yctx: yctx,
+      mainctx: mainctx,
+      optctx: optctx,
+      minNum: minData,
+      maxNum: maxData,
+      ycWidth: this.yWidth,
+      ycHeight: this.cHeight,
+      maincHeight: this.cHeight,
+      mainBgColor: '#fff'
+    }
+    this.maincWidth = drawKLinesUtil.init(config)
+  }
+
+  // 开始绘制
+  _onCanvasMain () {
+    let _t = this
+    drawKLinesUtil.onDrawYAxis()
+    drawKLinesUtil.onDrawXAxis()
+    // scrollview 中嵌套canvas，scroll-left 必须在draw回调里面去实现，否则不起作用
+    drawKLinesUtil.onDrawKLines(res => {
+      drawKLinesUtil.config.mainctx.draw(false, function (res) {
+        _t.scrollToRight = _t.maincWidth
+        _t.$apply()
+      })
+    })
+  }
+
+  onTouchStart (e) {
+    this.isScroll = false;
+  }
+
+  onTouchEnd (e) {
+    if (this.isScroll) {
+      return;
+    }
+    this.curMsg = drawKLinesUtil.onTouch(e.changedTouches[0].pageX)
+  }
+
+  onScroll (e) {
+    this.scrollLeft = e.detail.scrollLeft
+    this.curMsg = drawKLinesUtil.onScroll(e.detail.scrollLeft)
+    this.isScroll = true;
+  }
+
+  methods = {
+    onToLandscape (e) {
+      wepy.navigateTo({ url: 'landscape' });
+    },
+    onShowMore () {
+      if (this.tab == 'sign') {
+        wepy.navigateTo({ url: 'tradeSign' });
+      } else {
+        wepy.navigateTo({ url: 'tradeOrder' });
+      }
+    },
+    onTab (type) {
+      if (type == 'sign') {
+        this.tab = 'sign'
+      } else if (type == 'order') {
+        this.tab = 'order'
+      }
+    },
+    onChange (e) {
+      console.log(e)
+      if (e.detail == 1) {
+        if (this.isAdmin) {
+          wepy.switchTab({ url: 'about' });
+        } else {
+
+        }
+      } else if (e.detail == 2) {
+
+      }
+    },
+    onBack () {
+      wepy.navigateBack({
+        delta: 1 //返回的页面数，如果 delta 大于现有页面数，则返回到首页,
+      });
+
+    }
+  };
+}
+</script>

@@ -1,0 +1,304 @@
+<template>
+  <titlebar leftArrow="true"
+            @click-left.user="onBack"
+            titleName="策略回测"
+            bgcolor=""></titlebar>
+  <van-collapse value="{{ activeNames }}"
+                bind:change="onChange">
+    <van-collapse-item title="回测设置"
+                       name="1"
+                       icon="setting-o">
+      <view class="expand-item">
+        <text>初始资金</text>
+        <input class="input"
+               value="{{backTestSetting.startMoney}}"
+               type="digit"
+               bindinput="onStartAccetsInput" />
+      </view>
+      <view class="expand-item">
+        <text>手续费用</text>
+        <input class="input"
+               value="{{backTestSetting.serviceFree}}"
+               type="digit"
+               bindinput="onServiceFreeInput" />
+      </view>
+      <picker bindchange="bindGoodsPickerChange"
+              value="{{index}}"
+              range="{{goodsList}}">
+        <view class="expand-item">
+          <text>选择币种</text>
+          <view class="content-label">{{backTestSetting.selectGoods}}</view>
+          <i class="iconfont icon-right right-icon"></i>
+        </view>
+      </picker>
+      <view class="expand-item"
+            @tap="onSelectDateTime(1)">
+        <text>开始时间</text>
+        <view class="content-label">{{backTestSetting.selectStartDateTime}}</view>
+        <i class="iconfont icon-right right-icon"></i>
+      </view>
+      <view class="expand-item"
+            @tap="onSelectDateTime(2)">
+        <text>结束时间</text>
+        <view class="content-label">{{backTestSetting.selectEndDateTime}}</view>
+        <i class="iconfont icon-right right-icon"></i>
+      </view>
+      <picker bindchange="bindStrategyPickerChange"
+              value="{{index}}"
+              range="{{strategyList}}">
+        <view class="expand-item">
+          <text>选择策略</text>
+          <view class="content-label">{{backTestSetting.selectStrategy}}</view>
+          <i class="iconfont icon-right right-icon"></i>
+        </view>
+      </picker>
+    </van-collapse-item>
+  </van-collapse>
+  <view class="btn-action"
+        hover-class="click-hover-o"
+        @tap="onStartBackTest">执行回测</view>
+  <view class="back-test-history">
+    <i class="iconfont icon-history"></i>
+    <text>回测记录</text>
+  </view>
+  <backTestList :limit.sync="limit"
+                @click-detail.user="onToDetail"
+                :backTestList.sync="backTestList"></backTestList>
+  <van-popup show="{{ isShowPop }}"
+             position="bottom"
+             custom-style=""
+             bind:close="onClose">
+    <van-datetime-picker type="datetime"
+                         value="{{ currentDate }}"
+                         min-date="{{ minDate }}"
+                         max-date="{{ currentDate }}"
+                         bind:input="onInput"
+                         bind:confirm="onDateTimeComfirm"
+                         bind:cancel="onDateTimeCancel" />
+  </van-popup>
+</template>
+<script>
+import wepy from 'wepy'
+import util from '@/utils/util'
+import titlebar from '../components/title-bar-zl';
+import backTestList from '../components/backtest-list'
+export default class backTest extends wepy.page {
+  config = {
+    usingComponents: {
+      "van-collapse": "../components/vant/collapse/index",
+      "van-collapse-item": "../components/vant/collapse-item/index",
+      "van-datetime-picker": "../components/vant/datetime-picker/index",
+      "van-popup": "../components/vant/popup/index"
+    }
+  }
+
+  components = {
+    titlebar: titlebar,
+    backTestList: backTestList
+  }
+
+  data = {
+    isShowPop: false,
+    activeNames: ['1'],
+    backTestSetting: {
+      startMoney: 0,
+      serviceFree: 0,
+      selectGoods: '',
+      selectStartDateTime: '',
+      selectEndDateTime: '',
+      selectStrategy: '',
+    },
+    timeType: 1, // 1:开始时间  2：结束时间
+    currentDate: new Date().getTime(),
+    minDate: new Date(2000, 1, 1).getTime(),
+    goodsList: [
+      'BTC/USDT',
+      'ETC/USDT'
+    ],
+    strategyList: [
+      '量化波动'
+    ],
+    backTestList: [
+      {
+        name: '量化波动',
+        time: '2019-09-17 10:12:23',
+        goods: 'BTC/USDT',
+        return: '15%',
+        start_time: '2017-12-12 00:00:00',
+        end_time: '2017-12-12 00:00:00',
+      },
+      {
+        name: '量化波动',
+        time: '2019-09-17 10:12:23',
+        goods: 'BTC/USDT',
+        return: '15%',
+        start_time: '2017-12-12 00:00:00',
+        end_time: '2017-12-12 00:00:00',
+      }, {
+        name: '量化波动',
+        time: '2019-09-17 10:12:23',
+        goods: 'BTC/USDT',
+        return: '15%',
+        start_time: '2017-12-12 00:00:00',
+        end_time: '2017-12-12 00:00:00',
+      }, {
+        name: '量化波动',
+        time: '2019-09-17 10:12:23',
+        goods: 'BTC/USDT',
+        return: '15%',
+        start_time: '2017-12-12 00:00:00',
+        end_time: '2017-12-12 00:00:00',
+      }, {
+        name: '量化波动',
+        time: '2019-09-17 10:12:23',
+        goods: 'BTC/USDT',
+        return: '15%',
+        start_time: '2017-12-12 00:00:00',
+        end_time: '2017-12-12 00:00:00',
+      },
+    ],
+    limit: 10,
+  }
+
+  onLoad () {
+    console.log(this.currentDate, this.minDate)
+    this._onLoadOrderData()
+  }
+
+  onStartAccetsInput (e) {
+    this.backTestSetting.startMoney = e.detail.value
+  }
+
+  onServiceFreeInput (e) {
+    this.backTestSetting.serviceFree = e.detail.value
+  }
+
+  _onLoadOrderData () {
+    this.$invoke('backTestList', 'onUpdateData', this.backTestList)
+  }
+
+  onReachBottom () {
+  }
+
+
+  methods = {
+    onChange (e) {
+      this.activeNames = e.detail
+      console.log(e)
+    },
+    onDateTimeComfirm (e) {
+      if (this.timeType == 1) {
+        this.backTestSetting.selectStartDateTime = util.timestampToTime(e.detail)
+      } else if (this.timeType == 2) {
+        this.backTestSetting.selectEndDateTime = util.timestampToTime(e.detail)
+      }
+      this.isShowPop = false
+    },
+    onDateTimeCancel (e) {
+      console.log(e)
+      this.isShowPop = false
+    },
+    onSelectDateTime (e) {
+      console.log(e)
+      this.timeType = e
+      this.isShowPop = true
+    },
+    bindGoodsPickerChange (e) {
+      this.backTestSetting.selectGoods = this.goodsList[e.detail.value]
+      console.log('bindGoodsPickerChange', e)
+    },
+    bindStrategyPickerChange (e) {
+      this.backTestSetting.selectStrategy = this.strategyList[e.detail.value]
+      console.log('bindStrategyPickerChange', e)
+    },
+    onStartBackTest () {
+      const settings = this.backTestSetting
+      if (settings.startMoney <= 0 || settings.startMoney == '') {
+        util.toast('初始资金填写错误')
+      } else if (settings.serviceFree < 0 || settings.startMoney == '') {
+        util.toast('手续费用填写错误')
+      } else if (settings.selectGoods) {
+        util.toast('请选择要回测的币种')
+      } else if (settings.selectStartDateTime) {
+        util.toast('请选择开始时间')
+      } else if (settings.selectEndDateTime) {
+        util.toast('请选择结束时间')
+      } else if (settings.selectStrategy) {
+        util.toast('请选择策略')
+      }
+    },
+    onToDetail () {
+      wepy.navigateTo({ url: 'backtestDetail' });
+
+    },
+    onBack () {
+      wepy.navigateBack({
+        delta: 1 //返回的页面数，如果 delta 大于现有页面数，则返回到首页,
+      });
+
+    }
+  }
+
+
+}
+</script>
+<style lang="less">
+page {
+  background: #f5f8fd;
+}
+.expand-item {
+  border-top: 1rpx solid #dfdede;
+  /* border-bottom: 1rpx solid #dfdede; */
+  display: flex;
+  align-items: center;
+  font-size: 30rpx;
+  height: 80rpx;
+  padding-left: 20rpx;
+  padding-right: 20rpx;
+}
+.input {
+  width: 70%;
+  margin-left: 20rpx;
+  border: 1rpx solid #bdbdbd;
+  height: 50rpx;
+  border-radius: 5rpx;
+  padding: 5rpx 20rpx;
+  color: #333;
+}
+.content-label {
+  color: #333;
+  margin-left: 20rpx;
+  flex: 1;
+}
+.right-icon {
+  font-size: 40rpx;
+}
+.btn-action {
+  width: 90%;
+  height: 70rpx;
+  background: #1e88e5;
+  line-height: 70rpx;
+  text-align: center;
+  color: #fff;
+  border-radius: 5rpx;
+  margin-left: 5%;
+  font-size: 30rpx;
+  margin-top: 20rpx;
+}
+.back-test-history {
+  font-size: 28rpx;
+  padding: 10rpx 20rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  margin-top: 40rpx;
+  border-top: 1rpx solid #dfdede;
+  border-bottom: 1rpx solid #dfdede;
+  background: #fff;
+  i {
+    font-size: 40rpx;
+  }
+  text {
+    margin-left: 5px;
+  }
+}
+</style>
