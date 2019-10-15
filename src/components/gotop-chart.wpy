@@ -1,0 +1,29 @@
+<template>
+  <view class="main-container">
+    <canvas canvas-id="canvas"></canvas>
+    <canvas canvas-id="optCanvas"></canvas>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import gotopChart from '@/utils/gotop-chart'
+export default class goTopChart extends wepy.component {
+  data = {
+
+  }
+
+  onLoad (e) {
+
+  }
+
+  methods = {
+
+  }
+}
+</script>
+<style lang="less">
+.main-container {
+  width: 100%;
+  height: 300rpx;
+}
+</style>
