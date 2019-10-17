@@ -1,29 +1,88 @@
 <template>
-  <view class="main-container">
-    <canvas canvas-id="canvas"></canvas>
-    <canvas canvas-id="optCanvas"></canvas>
+  <view class="main-container"
+        style="width:{{cWidth}}px;height:{{cHeight}}px">
+    <canvas canvas-id="canvas"
+            style="width:{{cWidth}}px;height:{{cHeight}}px;position:absolute;"></canvas>
+    <canvas canvas-id="opt-canvas"
+            style="width:{{cWidth}}px;height:{{cHeight}}px;position:absolute;"
+            bindtouchstart="onTouchStart"
+            bindtouchend="onTouchEnd"
+            bindtouchmove="onTouchMove"
+            @tap.stop="onClick"></canvas>
   </view>
 </template>
 <script>
 import wepy from 'wepy'
 import gotopChart from '@/utils/gotop-chart'
+import datas from '@/utils/datas'
 export default class goTopChart extends wepy.component {
   data = {
-
+    cWidth: 0,
+    cHeight: 240,
+    QTChart: null,
+    option: {},
   }
 
   onLoad (e) {
-
+    let _t = this;
+    wx.getSystemInfo({
+      success (res) {
+        _t.cWidth = res.windowWidth;
+        console.log('width:', _t.cWidth)
+      }
+    });
+    var option = {
+      canvas: wx.createCanvasContext('canvas'),
+      optCanvas: wx.createCanvasContext('opt-canvas'),
+      chartArray: [
+        {
+          name: 'kline',
+          goodsName: 'BTC/USDT',
+          index: 0,
+          datas: datas.kLines,
+        }
+      ]
+    }
+    this.QTChart = gotopChart.QTChart.Init()
+    this.QTChart.OnSize(this.cHeight, this.cWidth)
+    this.QTChart.SetOption(option)
+    this.$apply()
   }
 
   methods = {
+    onTouchStart (e) {
+      this.QTChart && this.QTChart.onTouchStart(e.changedTouches[0].x, e.changedTouches[0].y)
+    },
+    onTouchEnd (e) {
+      this.QTChart && this.QTChart.onTouchEnd(e.changedTouches[0].x, e.changedTouches[0].y)
+    },
+    onTouchMove (e) {
+      if (this.QTChart) {
+        let curMsg = this.QTChart.onTouchMove(e.changedTouches[0].x, e.changedTouches[0].y)
+        console.log('curMsg:', curMsg)
+      }
+    },
+    onClick (e) {
+      if (this.QTChart) {
+        let curMsg = this.QTChart.onSelectKLine(e.changedTouches[0].clientX)
+        console.log('curMsg:', curMsg)
+      }
+    }
 
   }
 }
 </script>
 <style lang="less">
 .main-container {
-  width: 100%;
-  height: 300rpx;
+  position: relative;
+  margin-top: 100rpx;
+}
+.canvas {
+  position: absolute;
+  z-index: 1;
+}
+.opt-canvas {
+  position: absolute;
+  z-index: 2;
 }
 </style>

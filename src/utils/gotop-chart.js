@@ -2,19 +2,19 @@ var Basic = {
   OrignDatas: {
 
   },
-  curMsgContainerHeight: 50,
+  curMsgContainerHeight: 10,
   yAxisWidth: 50,
-  xAxisHeight: 30,
+  xAxisHeight: 20,
   chartPd: 10,
-  kLineWidth: 8,
-  kLineMarginRight: 3,
+  kLineWidth: 15,
+  kLineMarginRight: 10,
   signWidth: 20,
   canvasPaddingLeft: 10,
-  signR: 15,
-  upColor: '#26a69a',
-  downColor: '#ef5350',
-  buySignBg: '#4fc3f7',
-  sellSignBg: '#fdd835',
+  signR: 10,
+  upColor: '#e64340',
+  downColor: '#09bb07',
+  buySignBg: '#F99DA0',
+  sellSignBg: '#84D0A1',
   volUpColor: 'rgba(38,166,154,0.5)',
   volDownColor: 'rgba(239,83,80,0.5)',
 }
@@ -145,7 +145,6 @@ function QTChart () {
   // 计算当前屏幕可容纳多少根k线
   this.CalSceenKNum = function () {
     Basic.ScreenKNum = Math.floor((Basic.width - Basic.yAxisWidth - Basic.canvasPaddingLeft) / (Basic.kLineWidth + Basic.kLineMarginRight))
-    console.log('update', Basic.width, Basic.ScreenKNum)
   }
   // 更新画布
   this.SetUpdate = function () {
@@ -157,6 +156,7 @@ function QTChart () {
         case 'kline':
           this.xAxisChart.SetUpdateXAxis(this.ChartArray[i])
           this.ChartArray[i].yRange = this.kLineChart.SetUpdateKLineChart(this.ChartArray[i])
+          this.kLineChart.DrawCurBorder(this.OptCanvas, Basic.ScreenKNum)
           break;
         case 'vol':
           this.ChartArray[i].yRange = this.volChart.SetUpdateVol(this.ChartArray[i])
@@ -165,46 +165,66 @@ function QTChart () {
           this.ChartArray[i].yRange = this.macdChart.SetUpdateMACDChart(this.ChartArray[i])
       }
     }
+    this.Canvas.draw()
   }
   // 鼠标拖动
-  this.OnMouseMove = function (start, end) {
+  this.OnMouseMove = function (moveStep) {
     var pre = this.DataPreIndex
     var cur = this.DataCurIndex
-    var dataStep = parseInt(end - start)
-
-    if (dataStep > 0) {
+    moveStep = parseInt(moveStep / 4)
+    if (moveStep == 0) return
+    var step = Math.abs(moveStep)
+    if (moveStep > 0) {
       // 画布向右拖动，数据往左移动
-      pre != 0 && (pre-- , cur--)
-    } else if (dataStep < 0) {
+      pre != 0 && (pre -= step, cur -= step)
+    } else if (moveStep < 0) {
       // 画布向左拖动，数据往右移动
-      cur != Basic.OrignDatas.kline.length - 1 && (cur++ , pre++)
+      cur != Basic.OrignDatas.kline.length - 1 && (cur += step, pre += step)
     }
     this.DataPreIndex = pre
     this.DataCurIndex = cur
-    console.log(pre, cur)
     this.SetUpdate()
-    if (pre == this.DataPreIndex || cur == this.DataCurIndex) return
   }
   // 事件监听
   var _self = this
-  this.OptCanvasElement.onmousemove = function (e) {
-    _self.onDrawCursor(e.offsetX, e.offsetY)
+  this.onTouchMove = function (x, y) {
+    // _self.onDrawCursor(x, y)
     if (!this.isDrag) {
       return
     }
-    _self.OnMouseMove(this.MoveStartX, e.clientX)
-    this.MoveStartX = e.clientX
+    var moveStep = parseInt(x - this.MoveStartX);
+    if (Math.abs(moveStep) < 5) return;
+    _self.OnMouseMove(moveStep)
+    this.MoveStartX = x
+    return this.ChartArray[0].datas[Basic.ScreenKNum - 1]
   }
-  this.OptCanvasElement.onmousedown = function (e) {
+  this.onTouchStart = function (x, y) {
     this.isDrag = true
-    this.MoveStartX = e.clientX
+    this.MoveStartX = x
   }
-  this.OptCanvasElement.onmouseup = function (e) {
+  this.onTouchEnd = function (x, y) {
     this.isDrag = false
   }
-  this.OptCanvasElement.onmousewheel = function (e) {
-    _self.onKLineScale(e.wheelDelta)
+
+  //判断是单个手指
+  this.IsPhoneDragging = function (e) {
+    // console.log(e);
+    var changed = e.changedTouches.length;
+    var touching = e.touches.length;
+
+    return changed == 1 && touching == 1;
   }
+
+  //是否是2个手指操所
+  this.IsPhonePinching = function (e) {
+    var changed = e.changedTouches.length;
+    var touching = e.touches.length;
+
+    return (changed == 1 || changed == 2) && touching == 2;
+  }
+  // this.OptCanvas.onmousewheel = function (e) {
+  //   _self.onKLineScale(e.wheelDelta)
+  // }
 
   // 开始绘制
   this.Draw = function () {
@@ -226,7 +246,6 @@ function QTChart () {
           this.ChartArray[i].yRange = this.volChart.Create()
           break;
         case 'macd':
-          console.log('range:', this.ChartArray[i])
           var macdChart = new MACDChart(this.Canvas, this.ChartArray[i])
           this.macdChart = macdChart
           this.ChartObjArray.push(this.macdChart)
@@ -234,6 +253,21 @@ function QTChart () {
           break;
       }
     }
+    this.Canvas.draw()
+  }
+  this.onSelectKLine = function (x, y) {
+    // 当前光标所处的K线位置
+    let kn = Math.ceil(
+      (x - Basic.canvasPaddingLeft) /
+      (Basic.kLineWidth + Basic.kLineMarginRight)
+    )
+    if (kn > this.ChartArray[0].datas.length) {
+      kn = this.ChartArray[0].datas.length
+    } else if (kn <= 0) {
+      kn = 1
+    }
+    this.kLineChart.DrawCurBorder(this.OptCanvas, kn)
+    return this.ChartArray[0].datas[kn - 1]
   }
   // 绘制十字 光标
   this.onDrawCursor = function (x, y) {
@@ -282,20 +316,20 @@ function QTChart () {
     var curKMsg = this.ChartArray[0].datas[kn - 1]
     var tw = this.OptCanvas.measureText(curKMsg.day).width
 
-    this.OptCanvas.fillStyle = '#333'
+    this.OptCanvas.setFillStyle('#333')
     this.OptCanvas.fillRect(x - tw / 2 - 10, Basic.height - Basic.xAxisHeight + 5, tw + 20, 15)
 
-    this.OptCanvas.fillStyle = '#fff'
+    this.OptCanvas.setFillStyle('#fff')
     this.OptCanvas.fillText(curKMsg.day, x - tw / 2, Basic.height - Basic.xAxisHeight + 17)
 
     var ytw = this.OptCanvas.measureText(yNum).width
     // 绘制Y轴的值标识
-    this.OptCanvas.fillStyle = '#333'
+    this.OptCanvas.setFillStyle('#333')
     this.OptCanvas.fillRect(Basic.width - Basic.yAxisWidth, y - 10, ytw + 20, 20)
 
     this.OptCanvas.beginPath()
     this.OptCanvas.setFontSize(12)
-    this.OptCanvas.fillStyle = '#fff'
+    this.OptCanvas.setFillStyle('#fff')
     this.OptCanvas.fillText(yNum, Basic.width - Basic.yAxisWidth + 5, y + 5)
     this.OptCanvas.closePath()
 
@@ -329,6 +363,7 @@ function QTChart () {
           break;
       }
     }
+    this.OptCanvas.draw()
   }
   // 图表缩放
   this.onKLineScale = function (type) {
@@ -367,13 +402,10 @@ function KLinesChart (canvas, option) {
   this.YAxisChart
   this.turnStatus = ""
   this.maxLow = {
-
   }
   this.maxTop = {
-
   }
   this.drawTopLowPoint = {
-
   }
   // 创建K线图表
   this.Create = function () {
@@ -415,12 +447,12 @@ function KLinesChart (canvas, option) {
     let text = option.goodsName + ':' + curMsg.day + " " + '开=' + curMsg.open + ',' + '收=' + curMsg.close + ',' + '高=' + curMsg.high + ',' + '低=' + curMsg.low + ',' + '量=' + curMsg.volume
     canvas.setLineDash([0])
     canvas.setStrokeStyle('#cdcdcd')
-    canvas.fillStyle = '#f2faff'
+    canvas.setFillStyle('#f2faff')
     canvas.strokeRect(option.cStartX, option.cStartY, option.cEndX - option.cStartX, Basic.curMsgContainerHeight / 2)
     canvas.fillRect(option.cStartX, option.cStartY, option.cEndX - option.cStartX, Basic.curMsgContainerHeight / 2)
     canvas.beginPath()
     canvas.setFontSize(18)
-    canvas.fillStyle = "#333"
+    canvas.setFillStyle("#333")
     canvas.fillText(text, option.cStartX + 40, option.cStartY + 20)
     canvas.closePath()
     canvas.stroke()
@@ -431,19 +463,19 @@ function KLinesChart (canvas, option) {
     this.Canvas.beginPath()
     if (open < close) {
       // 上涨
-      this.Canvas.fillStyle = Basic.upColor
+      this.Canvas.setFillStyle(Basic.upColor)
       this.Canvas.setStrokeStyle(Basic.upColor)
       startY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (close - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
       endY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (open - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
     } else if (open > close) {
       // 下跌
-      this.Canvas.fillStyle = Basic.downColor
+      this.Canvas.setFillStyle(Basic.downColor)
       this.Canvas.setStrokeStyle(Basic.downColor)
       startY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (open - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
       endY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (close - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
     } else {
       // 平
-      this.Canvas.fillStyle = '#666'
+      this.Canvas.setFillStyle('#666')
       this.Canvas.setStrokeStyle('#666')
       startY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (open - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
       endY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (open - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
@@ -453,12 +485,9 @@ function KLinesChart (canvas, option) {
     highpx = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (high - this.YAxisChart.MinDatas) * this.YNumpx + this.Option.cStartY + Basic.curMsgContainerHeight
     lowpx = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (low - this.YAxisChart.MinDatas) * this.YNumpx + this.Option.cStartY + Basic.curMsgContainerHeight
     var h = endY - startY
-    h < 1 && (h = 2)
+    h < 1 && (h = 1)
     h == 0 && (h = 1)
     this.Canvas.fillRect(ToFixedRect(startX), ToFixedRect(startY), ToFixedRect(endX - startX), ToFixedRect(h))
-    if (close === 10688) {
-      console.log('rect', startX, endX, startY, endY)
-    }
     // config.basic.mainctx.setLineDash(0)
     this.Canvas.setLineWidth(1)
     this.Canvas.moveTo(ToFixedPoint(startX + Basic.kLineWidth / 2), ToFixedPoint(highpx))
@@ -477,28 +506,97 @@ function KLinesChart (canvas, option) {
     if (curMsg.signal.type === 'buy') {
       signType = '买'
       centerY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (curMsg.low - this.YAxisChart.MinDatas) * this.YNumpx + r + this.Option.cStartY + Basic.curMsgContainerHeight
-      this.Canvas.fillStyle = Basic.buySignBg
+      this.Canvas.setFillStyle(Basic.buySignBg)
     } else {
       signType = '卖'
       centerY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (curMsg.high - this.YAxisChart.MinDatas) * this.YNumpx - r + this.Option.cStartY + Basic.curMsgContainerHeight
-      this.Canvas.fillStyle = Basic.sellSignBg
+      this.Canvas.setFillStyle(Basic.sellSignBg)
     }
     this.Canvas.arc(centerX, centerY, r, 0, 2 * Math.PI)
     this.Canvas.fill()
 
     this.Canvas.beginPath()
-    this.Canvas.setFontSize(14)
-    this.Canvas.fillStyle = '#fff'
+    this.Canvas.setFontSize(10)
+    this.Canvas.setFillStyle('#fff')
     this.Canvas.fillText(signType, (centerX - r / 2), centerY + r / 2.8)
     this.Canvas.stroke()
     this.Canvas.closePath()
 
     this.Canvas.beginPath()
-    this.Canvas.setFontSize(14)
-    this.Canvas.fillStyle = '#333'
+    this.Canvas.setFontSize(10)
+    this.Canvas.setFillStyle('#333')
     this.Canvas.fillText(curMsg.signal.price, centerX - r, curMsg.signal.type === 'buy' ? centerY + r + 15 : centerY - r - 5)
     this.Canvas.stroke()
     this.Canvas.closePath()
+  }
+
+  this.DrawCurBorder = function (optCanvas, kn) {
+    var startX, startY, endX, endY, closeY
+    var curMsg = this.Datas[kn - 1]
+    optCanvas.beginPath()
+    if (curMsg.open < curMsg.close) {
+      // 上涨
+      startY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (curMsg.close - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
+      endY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (curMsg.open - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
+    } else if (curMsg.open > curMsg.close) {
+      // 下跌
+      startY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (curMsg.open - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
+      endY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (curMsg.close - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
+    } else {
+      // 平
+      startY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (curMsg.open - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
+      endY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (curMsg.open - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
+    }
+    startX = Basic.canvasPaddingLeft + (Basic.kLineWidth + Basic.kLineMarginRight) * (kn - 1) + this.Option.cStartX
+    endX = startX + Basic.kLineWidth
+    closeY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (curMsg.close - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
+    // 绘制虚线
+    optCanvas.clearRect(0, 0, Basic.width, Basic.height)
+
+    optCanvas.beginPath()
+    optCanvas.setStrokeStyle('#666')
+    optCanvas.setLineWidth(1)
+    optCanvas.setLineDash([5, 5])
+    optCanvas.moveTo(ToFixedPoint(startX + Basic.kLineWidth / 2), 0)
+    optCanvas.lineTo(ToFixedPoint(startX + Basic.kLineWidth / 2), ToFixedPoint(Basic.height - Basic.xAxisHeight))
+
+    optCanvas.moveTo(0, ToFixedPoint(closeY))
+    optCanvas.lineTo(ToFixedPoint(Basic.width - Basic.yAxisWidth), ToFixedPoint(closeY))
+    optCanvas.stroke()
+    optCanvas.closePath()
+
+    // 绘制border
+    optCanvas.beginPath()
+    optCanvas.setStrokeStyle('#333')
+    optCanvas.setLineWidth(2)
+    optCanvas.setLineDash([0])
+    optCanvas.strokeRect(ToFixedPoint(startX), ToFixedPoint(startY), ToFixedPoint((endX - startX)), ToFixedPoint((endY - startY)))
+    optCanvas.closePath()
+    optCanvas.stroke()
+
+    // 绘制X轴的时间标识
+    optCanvas.setFontSize(12)
+    Basic.curKIndex = kn - 1
+    var tw = optCanvas.measureText(curMsg.day).width
+
+    optCanvas.setFillStyle('#333')
+    optCanvas.fillRect(startX + Basic.kLineWidth / 2 - tw / 2 - 10, Basic.height - Basic.xAxisHeight + 5, tw + 20, 15)
+
+    optCanvas.setFillStyle('#fff')
+    optCanvas.fillText(curMsg.day, startX + Basic.kLineWidth / 2 - tw / 2, Basic.height - Basic.xAxisHeight + 17)
+
+    var ytw = optCanvas.measureText(curMsg.close).width
+    // 绘制Y轴的值标识
+    optCanvas.setFillStyle('#333')
+    optCanvas.fillRect(Basic.width - Basic.yAxisWidth, closeY - 10, ytw + 20, 20)
+
+    optCanvas.beginPath()
+    optCanvas.setFontSize(12)
+    optCanvas.setFillStyle('#fff')
+    optCanvas.fillText(curMsg.close, Basic.width - Basic.yAxisWidth + 5, closeY + 5)
+    optCanvas.closePath()
+    optCanvas.stroke()
+    optCanvas.draw()
   }
 
   this.DrawTopLowLine = function () {
@@ -580,16 +678,15 @@ function VolChart (canvas, option) {
   this.DrawVols = function (i, yNumpx, vol, open, close, startX, startY, endX, endY) {
     this.Canvas.beginPath()
     if (open < close) {
-      this.Canvas.fillStyle = Basic.volUpColor
+      this.Canvas.setFillStyle(Basic.volUpColor)
     } else if (open > close) {
-      this.Canvas.fillStyle = Basic.volDownColor
+      this.Canvas.setFillStyle(Basic.volDownColor)
     }
     startX = Basic.canvasPaddingLeft + (Basic.kLineWidth + Basic.kLineMarginRight) * i + this.Option.cStartX - Basic.kLineMarginRight / 2 + 1
     endX = startX + Basic.kLineWidth + Basic.kLineMarginRight - 1
     startY = this.Option.cHeight - ((vol - this.YAxisChart.MinDatas) * yNumpx) - Basic.chartPd + this.Option.cStartY
     endY = this.Option.cEndY - Basic.chartPd
     this.Canvas.fillRect(ToFixedRect(startX), ToFixedRect(startY), ToFixedRect(endX - startX), ToFixedRect(endY - startY))
-    console.log('drawvols:', startX, startY, endX - startX, endY - startY)
     this.Canvas.stroke()
     this.Canvas.closePath()
   }
@@ -600,12 +697,12 @@ function VolChart (canvas, option) {
     let text = 'Volume  ' + curMsg.volume
     canvas.setLineDash([0])
     canvas.setStrokeStyle('#cdcdcd')
-    canvas.fillStyle = '#f2faff'
+    canvas.setFillStyle('#f2faff')
     canvas.strokeRect(option.cStartX, option.cStartY, option.cEndX - option.cStartX, Basic.curMsgContainerHeight / 2)
     canvas.fillRect(option.cStartX, option.cStartY, option.cEndX - option.cStartX, Basic.curMsgContainerHeight / 2)
     canvas.beginPath()
     canvas.setFontSize(18)
-    canvas.fillStyle = "#333"
+    canvas.setFillStyle("#333")
     canvas.fillText(text, option.cStartX + 40, option.cStartY + 20)
     canvas.closePath()
     // canvas.stroke()
@@ -682,12 +779,12 @@ function MACDChart (canvas, option) {
     let text = 'MACD  ' + 'DIF:' + curMsg['DIFF'].toFixed(2) + ',DEA:' + curMsg['DEA'].toFixed(2) + ',MACD:' + curMsg['MACD'].toFixed(2)
     canvas.setLineDash([0])
     canvas.setStrokeStyle('#cdcdcd')
-    canvas.fillStyle = '#f2faff'
+    canvas.setFillStyle('#f2faff')
     canvas.strokeRect(option.cStartX, option.cStartY, option.cEndX - option.cStartX, Basic.curMsgContainerHeight / 2)
     canvas.fillRect(option.cStartX, option.cStartY, option.cEndX - option.cStartX, Basic.curMsgContainerHeight / 2)
     canvas.beginPath()
-    canvas.font = "18px Verdana"
-    canvas.fillStyle = "#333"
+    canvas.setFontSize(18)
+    canvas.setFillStyle("#333")
     canvas.fillText(text, option.cStartX + 40, option.cStartY + 20)
     canvas.closePath()
     // canvas.stroke()
@@ -733,7 +830,6 @@ function MACDChart (canvas, option) {
 
   this.DrawCurve = function (i, attrName) {
     this.StartX = Basic.canvasPaddingLeft + (Basic.kLineWidth + Basic.kLineMarginRight) * i + Basic.kLineWidth / 2 + this.Option.cStartX
-    console.log('macd:', attrName, this.Datas[i][attrName])
     if (parseFloat(this.Datas[i][attrName]) >= 0) {
       this.Option.zeroY != null ? this.StartY = this.Option.zeroY - (parseFloat(this.Datas[i][attrName]) * this.YNumpx) : this.StartY = this.Option.cEndY - (parseFloat(this.Datas[i][attrName]) * yNumpx) - Basic.chartPd
     } else {
@@ -785,7 +881,6 @@ function YAxis (canvas, option) {
     let minArray = []
     let maxArray = []
     let minData, maxData
-    console.log('range:', datas)
     if (datas instanceof Array) {
       for (let i in attrs) {
         minData = Math.min.apply(
@@ -809,7 +904,6 @@ function YAxis (canvas, option) {
       this.MaxDatas = Math.max.apply(
         Math, maxArray.map(function (o) { return o })
       )
-      console.log('range:', minArray, maxArray)
     } else {
       var dataArray = []
       for (var i in datas) {
@@ -841,7 +935,6 @@ function YAxis (canvas, option) {
     if (maxDataLength >= 3) {
       this.MaxDatas = Math.ceil(this.MaxDatas * fixArray[maxDataLength - 3]) / fixArray[maxDataLength - 3]
     }
-    console.log('range:', this.MinDatas, this.MaxDatas)
 
     var limit = (this.MaxDatas - this.MinDatas) / 4
     if (minDataLength > 2) {
@@ -859,20 +952,22 @@ function YAxis (canvas, option) {
       }
       this.YPoints.push(item)
     }
-    console.log('range:', this.YPoints)
   }
 
   this.Draw = function () {
     // 绘制Y轴
     this.Canvas.beginPath()
-    this.Canvas.setStrokeStyle('#333333')
+    this.Canvas.setStrokeStyle('#d5e2e6')
     this.Canvas.setLineWidth(1)
     this.Canvas.moveTo(ToFixedPoint(this.StartX), ToFixedPoint(this.StartY))
     this.Canvas.lineTo(ToFixedPoint(this.StartX), ToFixedPoint(this.EndY))
-    this.Canvas.font = '12px sans-serif'
-    this.Canvas.fillStyle = '#333'
+    this.Canvas.closePath()
+    this.Canvas.stroke()
+
+    this.Canvas.beginPath()
+    this.Canvas.setFontSize(12)
+    this.Canvas.setFillStyle('#d5e2e6')
     for (var i in this.YPoints) {
-      console.log('yAxis', this.YPoints[i])
       this.Canvas.moveTo(ToFixedPoint(this.StartX), ToFixedPoint(this.YPoints[i].yPosition))
       this.Canvas.lineTo(ToFixedPoint(this.StartX + 5), ToFixedPoint(this.YPoints[i].yPosition))
       this.Canvas.fillText((this.YPoints[i].value).toFixed(2), this.StartX + 10, this.YPoints[i].yPosition + 5)
@@ -897,8 +992,6 @@ function YAxis (canvas, option) {
     this.EndX = option.cEndX
     this.EndY = option.cEndY - Basic.chartPd
     this.Datas = option.datas
-    console.log('update yaxis:', this.StartX, this.StartY, this.EndX, this.EndY, this.Datas)
-    // this.Canvas.clearRect(this.StartX, this.StartY, Basic.yAxisWidth, this.EndY - this.StartY)
     this.SetValueRange()
     this.Draw()
   }
@@ -920,7 +1013,7 @@ function XAxis (canvas, option) {
 
   this.SetValueRange = function () {
     this.XPoints = []
-    var spaceTime = parseInt((this.EndX - Basic.canvasPaddingLeft) / (Basic.kLineWidth + Basic.kLineMarginRight) / 4)
+    var spaceTime = parseInt((this.EndX - Basic.canvasPaddingLeft) / (Basic.kLineWidth + Basic.kLineMarginRight) / 2)
     for (let i = 1, j = parseInt(this.Datas.length / spaceTime); i <= j; i++) {
       var item = {}
       item.value = this.Datas[i * spaceTime - 1].day
@@ -932,12 +1025,12 @@ function XAxis (canvas, option) {
   this.Draw = function () {
     // 绘制X轴
     this.Canvas.beginPath()
-    this.Canvas.setStrokeStyle('#000')
+    this.Canvas.setStrokeStyle('#d5e2e6')
     this.Canvas.setLineWidth(1)
     this.Canvas.moveTo(ToFixedPoint(this.StartX), ToFixedPoint(this.StartY))
     this.Canvas.lineTo(ToFixedPoint(this.EndX), ToFixedPoint(this.StartY))
-    this.Canvas.font = '12px sans-serif'
-    this.Canvas.fillStyle = '#333'
+    this.Canvas.setFontSize(12)
+    this.Canvas.setFillStyle('#d5e2e6')
     for (var i = 0, j = this.XPoints.length; i < j; i++) {
       this.Canvas.moveTo(ToFixedPoint(this.XPoints[i].xPosition), ToFixedPoint(this.StartY))
       this.Canvas.lineTo(ToFixedPoint(this.XPoints[i].xPosition), ToFixedPoint(this.StartY + 5))
@@ -958,7 +1051,6 @@ function XAxis (canvas, option) {
   }
 
   this.SetUpdateXAxis = function (option) {
-    console.log('update index: x')
     this.StartX = 0
     this.StartY = Basic.height - Basic.xAxisHeight
     this.EndX = option.cEndX - Basic.yAxisWidth
@@ -1029,4 +1121,8 @@ function GetMyBrowser () {
   if (userAgent.indexOf('compatible') > -1 && userAgent.indexOf('MSIE') > -1 && !isOpera) {
     return 'IE'
   }; // 判断是否IE浏览器
+}
+
+module.exports = {
+  QTChart
 }

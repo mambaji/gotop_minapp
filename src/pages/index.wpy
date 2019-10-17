@@ -293,24 +293,8 @@ page {
                    lazy-load="false">
       </cover-image>
     </cover-view>
-    <scroll-view class="scroll_box"
-                 style="width:{{wWidth-yWidth}}px;height:{{cHeight}}px;position:absolute;"
-                 scroll-x
-                 scroll-left="{{scrollToRight}}"
-                 bindscroll="onScroll"
-                 bindtouchend="onTouchEnd"
-                 bindtouchstart="onTouchStart">
-      <canvas style="width:{{maincWidth}}px;height:{{cHeight}}px;position:absolute;background:#fff;"
-              canvas-id="mainContent"></canvas>
-      <canvas class="canvas"
-              style="width:{{maincWidth}}px;height:{{cHeight}}px;"
-              canvas-id="select-k-canvas"></canvas>
-      </image>
-    </scroll-view>
+    <goTopChart></goTopChart>
   </view>
-  <canvas class="y-axis"
-          style="width:{{yWidth}}px;height:{{cHeight}}px;margin-left:{{wWidth-yWidth}}px;background:#fff;"
-          canvas-id="yAxis"></canvas>
   <view class="sign-order-tabbox">
     <view class="sign-order_content">
       <view class="sign_tab {{tab=='sign'?'active':''}}"
@@ -350,6 +334,7 @@ import titlebar from '../components/title-bar-zl';
 import drawKLinesUtil from '../utils/drawKLinesUtil'
 import signList from '../components/sign-list'
 import orderList from '../components/order-list'
+import goTopChart from '../components/gotop-chart'
 import wxFormat from '../wxs/format.wxs'
 export default class Index extends wepy.page {
   config = {
@@ -365,7 +350,8 @@ export default class Index extends wepy.page {
   components = {
     titlebar: titlebar,
     signList: signList,
-    orderList: orderList
+    orderList: orderList,
+    goTopChart: goTopChart
   };
 
   data = {
@@ -487,23 +473,12 @@ export default class Index extends wepy.page {
         _t.wHeight = res.windowHeight;
       }
     });
-
-    wx.setTabBarItem({
-      index: 2,
-      text: 'text',
-      iconPath: '/path/to/iconPath',
-      selectedIconPath: '/path/to/selectedIconPath'
-    })
   }
 
   onShow () {
     this._onLoadSignData()
     this._onLoadOrderData()
     this._onGetKLinesData();
-    if (this.scrollLeft) {
-      drawKLinesUtil.config.scrollLeft = this.scrollLeft
-    }
-    console.log('scroll-left:', drawKLinesUtil.config.scrollLeft)
   }
 
   _onLoadSignData () {
@@ -518,76 +493,8 @@ export default class Index extends wepy.page {
   _onGetKLinesData () {
     this.kDatas = kLinesDatas.kLines;
     this.curMsg = this.kDatas[this.kDatas.length - 1];
-    this._onDrawInit();
-    this._onCanvasMain()
   }
 
-  // 绘制初始化
-  _onDrawInit () {
-    const datas = this.kDatas
-    const yctx = wx.createCanvasContext('yAxis')
-    const mainctx = wx.createCanvasContext('mainContent')
-    const optctx = wx.createCanvasContext('select-k-canvas')
-    const minData = Math.min.apply(
-      Math,
-      datas.map(function (o) {
-        return o.low;
-      })
-    );
-    const maxData = Math.max.apply(
-      Math,
-      datas.map(function (o) {
-        return o.high;
-      })
-    );
-    let config = {
-      wWidth: this.wWidth,
-      wHeight: this.wHeight,
-      datas: datas,
-      signsList: this.tradeSignList,
-      yctx: yctx,
-      mainctx: mainctx,
-      optctx: optctx,
-      minNum: minData,
-      maxNum: maxData,
-      ycWidth: this.yWidth,
-      ycHeight: this.cHeight,
-      maincHeight: this.cHeight,
-      mainBgColor: '#fff'
-    }
-    this.maincWidth = drawKLinesUtil.init(config)
-  }
-
-  // 开始绘制
-  _onCanvasMain () {
-    let _t = this
-    drawKLinesUtil.onDrawYAxis()
-    drawKLinesUtil.onDrawXAxis()
-    // scrollview 中嵌套canvas，scroll-left 必须在draw回调里面去实现，否则不起作用
-    drawKLinesUtil.onDrawKLines(res => {
-      drawKLinesUtil.config.mainctx.draw(false, function (res) {
-        _t.scrollToRight = _t.maincWidth
-        _t.$apply()
-      })
-    })
-  }
-
-  onTouchStart (e) {
-    this.isScroll = false;
-  }
-
-  onTouchEnd (e) {
-    if (this.isScroll) {
-      return;
-    }
-    this.curMsg = drawKLinesUtil.onTouch(e.changedTouches[0].pageX)
-  }
-
-  onScroll (e) {
-    this.scrollLeft = e.detail.scrollLeft
-    this.curMsg = drawKLinesUtil.onScroll(e.detail.scrollLeft)
-    this.isScroll = true;
-  }
 
   methods = {
     onToLandscape (e) {

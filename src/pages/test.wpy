@@ -1,0 +1,22 @@
+<template>
+  <goTopChart></goTopChart>
+</template>
+<script>
+import wepy from 'wepy'
+import goTopChart from '../components/gotop-chart'
+export default class test extends wepy.page {
+  components = {
+    goTopChart: goTopChart
+  }
+
+  onLoad () {
+
+  }
+
+  methods = {
+
+  }
+}
+</script>
+<style>
+</style>
