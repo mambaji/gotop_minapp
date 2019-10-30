@@ -1,7 +1,4 @@
 <style lang="less">
-.scroll_box {
-  overflow: auto;
-}
 .top-box {
   display: flex;
   align-items: center;
@@ -113,25 +110,8 @@
       </view>
     </view>
   </view>
-
-  <view class="canvas-box">
-    <scroll-view class="scroll_box"
-                 style="width:{{wWidth-yWidth}}px;height:{{cHeight}}px;position:absolute;"
-                 scroll-x
-                 scroll-left="{{scrollToRight}}"
-                 bindscroll="onScroll"
-                 bindtouchend="onTouchEnd"
-                 bindtouchstart="onTouchStart">
-      <canvas style="width:{{maincWidth}}px;height:{{cHeight}}px;position:absolute;background:#fff;"
-              canvas-id="mainContent"></canvas>
-      <canvas class="canvas"
-              style="width:{{maincWidth}}px;height:{{cHeight}}px;"
-              canvas-id="select-k-canvas"></canvas>
-    </scroll-view>
-  </view>
-  <canvas class="y-axis"
-          style="width:{{yWidth}}px;height:{{cHeight}}px;margin-left:{{wWidth-yWidth}}px;background:#fff;"
-          canvas-id="yAxis"></canvas>
+  <goTopChart @cur-msg-changed.user="onCurMsgChange"
+              landScape="true"></goTopChart>
 </template>
 
 <script>
@@ -139,33 +119,29 @@ import wepy from 'wepy';
 import apiUtil from '../api/apiUtil';
 import kLinesDatas from '../utils/datas';
 import drawKLinesUtil from '../utils/drawKLinesUtil'
+import goTopChart from '../components/gotop-chart'
 import wxFormat from '../wxs/format.wxs'
 export default class landscape extends wepy.page {
   config = {
     pageOrientation: 'landscape'
   };
 
-  components = {};
+  components = {
+    goTopChart: goTopChart
+  };
 
   wxs = {
     wxFormat: wxFormat
   }
 
   data = {
-    wWidth: 0,
-    wHeight: 0,
-    yWidth: 60,
-    xHeight: 50,
+    cWidth: 0,
     cHeight: 240,
     goodsId: null,
     goodsName: 'BTC/USDT',
     goodsCode: null,
-    maincWidth: 0,  // mainCanvas 画布宽度
     kDatas: [],
     curMsg: {},
-    scrollToRight: 0,
-    isScroll: false,
-    mainCanvasImg: null,  // 画布生成的图片地址
     tradeSignList: [
       {
         type: 'buy',
@@ -184,102 +160,18 @@ export default class landscape extends wepy.page {
     let _t = this;
     wx.getSystemInfo({
       success (res) {
-        console.log(res);
-        _t.wWidth = res.windowWidth;
-        _t.wHeight = res.windowHeight;
-        _t.cHeight = _t.wHeight - 60;
+        _t.cWidth = res.windowWidth;
+        _t.cHeight = res.windowHeight - 60 - 20
+        console.log('width:', _t.cWidth)
+        _t.$invoke('goTopChart', 'setCanvasSize', _t.cWidth, _t.cHeight)
       }
     });
-    this._onGetKLinesData();
   }
-
-  _onGetKLinesData () {
-    this.kDatas = kLinesDatas.kLines;
-    this.curMsg = this.kDatas[this.kDatas.length - 1];
-    console.log('===', this.kDatas);
-    this._onDrawInit();
-    this._onCanvasMain()
-    //   this.$apply()
-    // })
-  }
-
-
-  // 绘制初始化
-  _onDrawInit () {
-    const datas = this.kDatas
-    const yctx = wx.createCanvasContext('yAxis')
-    const mainctx = wx.createCanvasContext('mainContent')
-    const optctx = wx.createCanvasContext('select-k-canvas')
-    const minData = Math.min.apply(
-      Math,
-      datas.map(function (o) {
-        return o.low;
-      })
-    );
-    const maxData = Math.max.apply(
-      Math,
-      datas.map(function (o) {
-        return o.high;
-      })
-    );
-    let config = {
-      wWidth: this.wWidth,
-      wHeight: this.wHeight,
-      datas: datas,
-      signsList: this.tradeSignList,
-      kNum: datas.length,
-      yctx: yctx,
-      mainctx: mainctx,
-      optctx: optctx,
-      minNum: minData,
-      maxNum: maxData,
-      ycWidth: this.yWidth,
-      ycHeight: this.cHeight,
-      maincHeight: this.cHeight,
-      kWidth: 15,
-      k_margin_right: 10,
-      main_margin_left: 15,
-      screen_show_time: 2,
-      mainBgColor: '#fff'
-    }
-    this.maincWidth = drawKLinesUtil.init(config)
-  }
-
-  // 开始绘制
-  _onCanvasMain () {
-    drawKLinesUtil.onDrawYAxis()
-    drawKLinesUtil.onDrawXAxis()
-    // scrollview 中嵌套canvas，scroll-left 必须在draw回调里面去实现，否则不起作用
-    drawKLinesUtil.onDrawKLines(res => {
-      let _t = this
-      drawKLinesUtil.config.mainctx.draw(false, function (res) {
-        console.log('scrollToRight===', _t.scrollToRight)
-        _t.scrollToRight = _t.maincWidth
-        _t.$apply()
-      })
-    })
-  }
-
-  onTouchStart (e) {
-    this.isScroll = false;
-  }
-
-  onTouchEnd (e) {
-    if (this.isScroll) {
-      return;
-    }
-    this.curMsg = drawKLinesUtil.onTouch(e.changedTouches[0].pageX)
-  }
-
-  onScroll (e) {
-    console.log('scroll===', e)
-    this.curMsg = drawKLinesUtil.onScroll(e.detail.scrollLeft)
-    this.isScroll = true;
-  }
-
-
 
   methods = {
+    onCurMsgChange (e) {
+      this.curMsg = e
+    },
     onBack () {
       wepy.navigateBack({
         delta: 1 //返回的页面数，如果 delta 大于现有页面数，则返回到首页,

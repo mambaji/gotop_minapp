@@ -6,8 +6,8 @@ var Basic = {
   yAxisWidth: 50,
   xAxisHeight: 20,
   chartPd: 10,
-  kLineWidth: 15,
-  kLineMarginRight: 10,
+  kLineWidth: 10,
+  kLineMarginRight: 6,
   signWidth: 20,
   canvasPaddingLeft: 10,
   signR: 10,
@@ -28,8 +28,6 @@ function QTChart () {
   this.FrameToolIds = [] //frame tool 的ID集
   this.ChartObjArray = []
 
-  this.BindEvents = function () {
-  }
   // 窗口初始化
   this.OnSize = function (height, width) {
     //画布大小通过div获取
@@ -114,8 +112,10 @@ function QTChart () {
     }
   }
   // 客户端窗口改动
-  this.SetOnSizeChange = function () {
-    var canvasHeight = Basic.height
+  this.SetOnSizeChange = function (height, width) {
+    Basic.width = width
+    Basic.height = height
+    var canvasHeight = width
     var addHeight = 0
     for (var j in this.ChartArray) {
       this.ChartArray[j].cHeight = (canvasHeight - Basic.xAxisHeight) * this.ChartArray[j].cHeightRatio
@@ -149,8 +149,6 @@ function QTChart () {
   // 更新画布
   this.SetUpdate = function () {
     this.SplitDatas(this.DataPreIndex, this.DataCurIndex)
-    this.Canvas.clearRect(0, 0, Basic.width, Basic.height)
-    // this.OptCanvas.clearRect(0, 0, Basic.width, Basic.height) //这里不能加，不然导致拖动的时候curMsg没有显示
     for (var i in this.ChartArray) {
       switch (this.ChartArray[i].name) {
         case 'kline':
@@ -167,35 +165,47 @@ function QTChart () {
     }
     this.Canvas.draw()
   }
+
+  this.onStep = function (dir) {
+    console.log(this.DataCurIndex, this.DataPreIndex)
+    for (var i = 0; i < parseInt(Basic.ScreenKNum / 2); i++) {
+      if (dir == 'left') {
+        this.DataPreIndex > 0 && (this.DataCurIndex-- , this.DataPreIndex--)
+      } else {
+        console.log(this.DataCurIndex)
+        this.DataCurIndex < (Basic.OrignDatas.kline.length - 1) && (this.DataCurIndex++ , this.DataPreIndex++)
+      }
+      this.CalSceenKNum()
+      console.log(Basic)
+      this.SetUpdate()
+
+    }
+  }
   // 鼠标拖动
-  this.OnMouseMove = function (moveStep) {
+  this.OnMouseMove = function (start, end) {
     var pre = this.DataPreIndex
     var cur = this.DataCurIndex
-    moveStep = parseInt(moveStep / 4)
-    if (moveStep == 0) return
-    var step = Math.abs(moveStep)
+    var moveStep = parseInt((end - start))
+    if (Math.abs(moveStep) < 5) return
     if (moveStep > 0) {
       // 画布向右拖动，数据往左移动
-      pre != 0 && (pre -= step, cur -= step)
+      pre != 0 && (pre-- , cur--)
     } else if (moveStep < 0) {
       // 画布向左拖动，数据往右移动
-      cur != Basic.OrignDatas.kline.length - 1 && (cur += step, pre += step)
+      cur != Basic.OrignDatas.kline.length - 1 && (cur++ , pre++)
     }
     this.DataPreIndex = pre
     this.DataCurIndex = cur
     this.SetUpdate()
+    this.MoveStartX = end
   }
   // 事件监听
   var _self = this
   this.onTouchMove = function (x, y) {
-    // _self.onDrawCursor(x, y)
     if (!this.isDrag) {
       return
     }
-    var moveStep = parseInt(x - this.MoveStartX);
-    if (Math.abs(moveStep) < 5) return;
-    _self.OnMouseMove(moveStep)
-    this.MoveStartX = x
+    _self.OnMouseMove(this.MoveStartX, x)
     return this.ChartArray[0].datas[Basic.ScreenKNum - 1]
   }
   this.onTouchStart = function (x, y) {
@@ -222,9 +232,6 @@ function QTChart () {
 
     return (changed == 1 || changed == 2) && touching == 2;
   }
-  // this.OptCanvas.onmousewheel = function (e) {
-  //   _self.onKLineScale(e.wheelDelta)
-  // }
 
   // 开始绘制
   this.Draw = function () {
@@ -269,102 +276,7 @@ function QTChart () {
     this.kLineChart.DrawCurBorder(this.OptCanvas, kn)
     return this.ChartArray[0].datas[kn - 1]
   }
-  // 绘制十字 光标
-  this.onDrawCursor = function (x, y) {
-    // 当前光标所处的K线位置
-    let kn = Math.ceil(
-      (x - Basic.canvasPaddingLeft) /
-      (Basic.kLineWidth + Basic.kLineMarginRight)
-    )
-    if (kn > this.ChartArray[0].datas.length) {
-      kn = this.ChartArray[0].datas.length
-    } else if (kn <= 0) {
-      kn = 1
-    }
-    var cursorX = Basic.canvasPaddingLeft + (Basic.kLineWidth + Basic.kLineMarginRight) * kn - Basic.kLineMarginRight - Basic.kLineWidth / 2
-    let chartConfig = null
-    for (let i in this.ChartArray) {
-      if (y > this.ChartArray[i].cStartY && y < this.ChartArray[i].cEndY) {
-        chartConfig = this.ChartArray[i]
-      }
-    }
-    if (!chartConfig) {
-      return
-    }
-    let unitPxNum = (chartConfig.yRange.maxData - chartConfig.yRange.minData) / (chartConfig.cHeight - Basic.curMsgContainerHeight - Basic.chartPd) // 每单位PX占多大值
-    let yNum = ((chartConfig.cEndY - y - Basic.chartPd) * unitPxNum + chartConfig.yRange.minData).toFixed(2)
-    if (chartConfig.yRange.isBig) {
-      yNum = (yNum / 1000).toFixed(3) + 'k'
-    }
-    // 绘制虚线
-    this.OptCanvas.clearRect(0, 0, Basic.width, Basic.height)
-    this.OptCanvas.beginPath()
-    this.OptCanvas.setStrokeStyle('#666')
-    this.OptCanvas.setLineWidth(1)
-    this.OptCanvas.setLineDash([5, 5])
-    this.OptCanvas.moveTo(ToFixedPoint(cursorX), 0)
-    this.OptCanvas.lineTo(ToFixedPoint(cursorX), ToFixedPoint(Basic.height - Basic.xAxisHeight))
 
-    this.OptCanvas.moveTo(0, ToFixedPoint(y))
-    this.OptCanvas.lineTo(ToFixedPoint(Basic.width - Basic.yAxisWidth), ToFixedPoint(y))
-    this.OptCanvas.stroke()
-    this.OptCanvas.closePath()
-
-    // 绘制X轴的时间标识
-    this.OptCanvas.setFontSize(12)
-    Basic.curKIndex = kn - 1
-    var curKMsg = this.ChartArray[0].datas[kn - 1]
-    var tw = this.OptCanvas.measureText(curKMsg.day).width
-
-    this.OptCanvas.setFillStyle('#333')
-    this.OptCanvas.fillRect(x - tw / 2 - 10, Basic.height - Basic.xAxisHeight + 5, tw + 20, 15)
-
-    this.OptCanvas.setFillStyle('#fff')
-    this.OptCanvas.fillText(curKMsg.day, x - tw / 2, Basic.height - Basic.xAxisHeight + 17)
-
-    var ytw = this.OptCanvas.measureText(yNum).width
-    // 绘制Y轴的值标识
-    this.OptCanvas.setFillStyle('#333')
-    this.OptCanvas.fillRect(Basic.width - Basic.yAxisWidth, y - 10, ytw + 20, 20)
-
-    this.OptCanvas.beginPath()
-    this.OptCanvas.setFontSize(12)
-    this.OptCanvas.setFillStyle('#fff')
-    this.OptCanvas.fillText(yNum, Basic.width - Basic.yAxisWidth + 5, y + 5)
-    this.OptCanvas.closePath()
-
-    for (let a in this.ChartArray) {
-      if (this.ChartArray[a].datas instanceof Array) {
-        let o = {}
-        o = this.ChartArray[a].datas[Basic.curKIndex]
-        this.ChartArray[a].curMsg = o
-      } else if (this.ChartArray[a].datas instanceof Object) {
-        let o = {}
-        for (let b in this.ChartArray[a].datas) {
-          o[b] = (this.ChartArray[a].datas[b][Basic.curKIndex]).toFixed(2)
-        }
-        this.ChartArray[a].curMsg = o
-      }
-    }
-    this.onDrawCurMsg()
-  }
-  // 绘制当前光标位置 具体信息
-  this.onDrawCurMsg = function () {
-    for (let c in this.ChartArray) {
-      switch (this.ChartArray[c].name) {
-        case 'kline':
-          this.kLineChart.DrawCurMsg(this.OptCanvas, this.ChartArray[c])
-          break;
-        case 'vol':
-          this.volChart.DrawCurMsg(this.OptCanvas, this.ChartArray[c])
-          break;
-        case 'macd':
-          this.macdChart.DrawCurMsg(this.OptCanvas, this.ChartArray[c])
-          break;
-      }
-    }
-    this.OptCanvas.draw()
-  }
   // 图表缩放
   this.onKLineScale = function (type) {
     if (type >= 0) {
@@ -379,7 +291,9 @@ function QTChart () {
       Basic.kLineMarginRight < 2 && (Basic.kLineMarginRight = 2)
     }
     this.CalSceenKNum()
-    this.DataPreIndex = this.DataCurIndex + 1 - Math.floor(Basic.ScreenKNum)
+    if (this.DataPreIndex == 0) {
+      this.DataCurIndex = this.DataPreIndex + Math.floor(Basic.ScreenKNum) - 1
+    } else { this.DataPreIndex = this.DataCurIndex + 1 - Math.floor(Basic.ScreenKNum) }
     this.SetUpdate()
   }
 }
@@ -415,47 +329,12 @@ function KLinesChart (canvas, option) {
     for (var i = 0, j = this.Datas.length; i < j; i++) {
       this.DrawKLines(i, parseFloat(this.Datas[i].open), parseFloat(this.Datas[i].close), parseFloat(this.Datas[i].high), parseFloat(this.Datas[i].low))
       this.Datas[i].signal && this.Datas[i].signal.type != "" && this.DrawTradeSign(i, this.Datas[i])
-      if (this.Datas[i]['status'] != '' && this.Datas[i]['status'] == 'ding') {
-        if (this.turnStatus == 'di' || this.turnStatus == '') {
-          this.turnStatus == 'di' && this.DrawTopLowLine() // +绘制
-          this.maxTop.value = this.Datas[i].high
-          this.maxTop.index = i
-          this.turnStatus == 'ding'
-        } else if (this.turnStatus == 'ding') {
-          this.setMaxValue(this.Datas[i].high)
-        }
-      } else if (this.Datas[i]['status'] != '' && this.Datas[i]['status'] == 'di') {
-        if (this.turnStatus == 'ding' || this.turnStatus == '') {
-          this.turnStatus == 'ding' && this.DrawTopLowLine() // +绘制
-          this.maxLow.value = this.Datas[i].low
-          this.maxLow.index = i
-          this.turnStatus == 'low'
-        } else if (this.turnStatus == 'di') {
-          this.setMaxValue(this.Datas[i].low)
-        }
-      }
     }
     let range = {
       minData: this.YAxisChart.MinDatas,
       maxData: this.YAxisChart.MaxDatas
     }
     return range
-  }
-  // 绘制当前信息
-  this.DrawCurMsg = function (canvas, option) {
-    let curMsg = option.curMsg
-    let text = option.goodsName + ':' + curMsg.day + " " + '开=' + curMsg.open + ',' + '收=' + curMsg.close + ',' + '高=' + curMsg.high + ',' + '低=' + curMsg.low + ',' + '量=' + curMsg.volume
-    canvas.setLineDash([0])
-    canvas.setStrokeStyle('#cdcdcd')
-    canvas.setFillStyle('#f2faff')
-    canvas.strokeRect(option.cStartX, option.cStartY, option.cEndX - option.cStartX, Basic.curMsgContainerHeight / 2)
-    canvas.fillRect(option.cStartX, option.cStartY, option.cEndX - option.cStartX, Basic.curMsgContainerHeight / 2)
-    canvas.beginPath()
-    canvas.setFontSize(18)
-    canvas.setFillStyle("#333")
-    canvas.fillText(text, option.cStartX + 40, option.cStartY + 20)
-    canvas.closePath()
-    canvas.stroke()
   }
   // 绘制K线图
   this.DrawKLines = function (i, open, close, high, low) {
@@ -533,6 +412,7 @@ function KLinesChart (canvas, option) {
   this.DrawCurBorder = function (optCanvas, kn) {
     var startX, startY, endX, endY, closeY
     var curMsg = this.Datas[kn - 1]
+    console.log(this.Datas, kn)
     optCanvas.beginPath()
     if (curMsg.open < curMsg.close) {
       // 上涨
@@ -569,7 +449,7 @@ function KLinesChart (canvas, option) {
     optCanvas.beginPath()
     optCanvas.setStrokeStyle('#333')
     optCanvas.setLineWidth(2)
-    optCanvas.setLineDash([0])
+    optCanvas.setLineDash(0)
     optCanvas.strokeRect(ToFixedPoint(startX), ToFixedPoint(startY), ToFixedPoint((endX - startX)), ToFixedPoint((endY - startY)))
     optCanvas.closePath()
     optCanvas.stroke()
@@ -599,35 +479,6 @@ function KLinesChart (canvas, option) {
     optCanvas.draw()
   }
 
-  this.DrawTopLowLine = function () {
-    tstartX = Basic.canvasPaddingLeft + (Basic.kLineWidth + Basic.kLineMarginRight) * this.drawTopLowPoint.top.index + this.Option.cStartX
-    tstartY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (this.drawTopLowPoint.top.value - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
-    lstartX = Basic.canvasPaddingLeft + (Basic.kLineWidth + Basic.kLineMarginRight) * this.drawTopLowPoint.low.index + this.Option.cStartX
-    lstartY = this.Option.cHeight - Basic.curMsgContainerHeight - Basic.chartPd - (this.drawTopLowPoint.low.value - this.YAxisChart.MinDatas) * this.YNumpx + Basic.curMsgContainerHeight + this.Option.cStartY
-    this.Canvas.beiginPath()
-    this.Canvas.setStrokeStyle('#666')
-    this.Canvas.setLineWidth(1)
-    this.Canvas.moveTo(ToFixedPoint(tstartX), ToFixedPoint(tstartY))
-    this.Canvas.lineTo(ToFixedPoint(lstartX), ToFixedPoint(lstartY))
-    this.Canvas.stroke()
-    this.Canvas.closePath()
-  }
-
-  this.setMaxValue = function (i, value) {
-    if (this.turnStatus == 'ding') {
-      if (value >= this.maxTop.value) {
-        this.maxTop.value = value
-        this.maxTop.index = i
-        this.drawTopLowPoint.top = this.maxTop
-      }
-    } else if (this.turnStatus == 'di') {
-      if (value <= this.maxLow.value) {
-        this.maxLow.value = value
-        this.maxLow.index = i
-        this.drawTopLowPoint.low = this.maxLow
-      }
-    }
-  }
   // 更新K线图表
   this.SetUpdateKLineChart = function (option) {
     this.Option = option

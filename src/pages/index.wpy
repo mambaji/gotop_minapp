@@ -148,22 +148,6 @@ page {
   text-align: right;
   margin-top: 30rpx;
 }
-.cover-view {
-  position: absolute;
-  top: 5px;
-  left: 10px;
-  padding: 5rpx;
-  background: #fff;
-  border: 1rpx solid #f2f2f2;
-  box-shadow: 2rpx 2rpx 2rpx 2rpx #cbcdd5;
-  border-radius: 8rpx;
-  z-index: 9999;
-}
-.scale-img {
-  width: 50rpx;
-  height: 50rpx;
-  border-radius: 5rpx;
-}
 
 .sign-order-tabbox {
   width: 100%;
@@ -284,16 +268,7 @@ page {
     </view>
   </view>
   <view class="canvas-box">
-    <cover-view class="cover-view">
-      <cover-image @tap.stop="onToLandscape"
-                   hover-class="click-hover-o"
-                   class="scale-img"
-                   src="../images/scale_big.png"
-                   mode="scaleToFill"
-                   lazy-load="false">
-      </cover-image>
-    </cover-view>
-    <goTopChart></goTopChart>
+    <goTopChart @cur-msg-changed.user="onCurMsgChange"></goTopChart>
   </view>
   <view class="sign-order-tabbox">
     <view class="sign-order_content">
@@ -355,21 +330,13 @@ export default class Index extends wepy.page {
   };
 
   data = {
-    wWidth: 0,
-    wHeight: 0,
-    yWidth: 60,
-    xHeight: 50,
+    cWidth: 0,
     cHeight: 240,
     goodsId: null,
     goodsName: 'BTC/USDT',
     goodsCode: null,
-    maincWidth: 0,  // mainCanvas 画布宽度
     kDatas: [],
     curMsg: {},
-    isScroll: false,
-    scrollToRight: 0,
-    scrollLeft: null,
-    mainCanvasImg: null,  // 画布生成的图片地址
     tab: 'sign', // sign or order
     accountMsg: {
       startAssets: '1000',
@@ -469,16 +436,19 @@ export default class Index extends wepy.page {
     let _t = this;
     wx.getSystemInfo({
       success (res) {
-        _t.wWidth = res.windowWidth;
-        _t.wHeight = res.windowHeight;
+        _t.cWidth = res.windowWidth;
+        _t.$invoke('goTopChart', 'setCanvasSize', _t.cWidth, _t.cHeight)
+        console.log('width:', _t.cWidth)
       }
     });
   }
 
   onShow () {
+
     this._onLoadSignData()
     this._onLoadOrderData()
     this._onGetKLinesData();
+    this.$invoke('goTopChart', 'setCanvasSize', this.cWidth, this.cHeight)
   }
 
   _onLoadSignData () {
@@ -497,9 +467,6 @@ export default class Index extends wepy.page {
 
 
   methods = {
-    onToLandscape (e) {
-      wepy.navigateTo({ url: 'landscape' });
-    },
     onShowMore () {
       if (this.tab == 'sign') {
         wepy.navigateTo({ url: 'tradeSign' });
@@ -514,21 +481,11 @@ export default class Index extends wepy.page {
         this.tab = 'order'
       }
     },
-    onChange (e) {
-      console.log(e)
-      if (e.detail == 1) {
-        if (this.isAdmin) {
-          wepy.switchTab({ url: 'about' });
-        } else {
-
-        }
-      } else if (e.detail == 2) {
-
-      }
-    },
     onToBackTest () {
       wepy.navigateTo({ url: 'backtest' });
-
+    },
+    onCurMsgChange (e) {
+      this.curMsg = e
     }
   };
 }
